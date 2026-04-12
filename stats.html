@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yui visitor stats 🌸🦀</title>
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      async function loadStats() {
+        const summaryBox = document.getElementById('stats-summary');
+        try {
+          const res = await fetch('./api/visitors');
+          const data = await res.json();
+          summaryBox.innerHTML = `
+            <div class="pill-box"><h3>Total visits</h3><p>${data.count}</p></div>
+            <div class="pill-box"><h3>Visits today</h3><p>${data.today}</p></div>
+            <div class="pill-box"><h3>Unique IPs</h3><p>${data.uniqueIps}</p></div>
+          `;
+        } catch (error) {
+          summaryBox.innerHTML = '<div class="pill-box"><h3>Stats unavailable</h3><p>The logger is not reachable right now.</p></div>';
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        setInterval(loadStats, 5000);
+      });
+    </script>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero card">
+        <div class="hero-grid" style="grid-template-columns: 1fr; text-align: center;">
+          <div class="hero-copy">
+            <p class="kicker">🌸 tiny admin corner</p>
+            <h1>Yui visitor stats</h1>
+            <p class="lead" style="margin-inline: auto;">
+              A soft little dashboard for checking how many visits reached Yui's nest.
+            </p>
+            <div class="hero-actions" style="justify-content: center;">
+              <a href="./" class="button primary">Back home</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 18px;">
+        <h2>📊 Summary</h2>
+        <div id="stats-summary" class="grid three-up">
+          <div class="pill-box"><h3>Loading</h3><p>Fetching visitor stats…</p></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

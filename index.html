@@ -8,25 +8,35 @@
       content="A soft, cute landing page all about Yui, a tiny crab girl of helpful chaos."
     />
     <script>
-      document.addEventListener('DOMContentLoaded', async function() {
+      async function loadVisitorStats() {
         try {
           const res = await fetch('./api/visitors');
           const data = await res.json();
           const target = document.getElementById('visit-count');
+          const todayTarget = document.getElementById('visit-today');
+          const uniqueTarget = document.getElementById('visit-unique');
           if (target) target.textContent = data.count;
+          if (todayTarget) todayTarget.textContent = data.today;
+          if (uniqueTarget) uniqueTarget.textContent = data.uniqueIps;
+          return data;
         } catch (error) {
           console.error('visitor count unavailable', error);
+          return null;
         }
+      }
+
+      document.addEventListener('DOMContentLoaded', async function() {
+        await loadVisitorStats();
+        setInterval(loadVisitorStats, 5000);
       });
 
       async function checkVisitors() {
-        try {
-          const res = await fetch('./api/visitors');
-          const data = await res.json();
-          alert(`Total visitors so far: ${data.count}`);
-        } catch (error) {
+        const data = await loadVisitorStats();
+        if (!data) {
           alert('Visitor count is not ready yet.');
+          return;
         }
+        alert(`Total visitors so far: ${data.count}\nToday: ${data.today}\nUnique IPs: ${data.uniqueIps}`);
       }
     </script>
     <title>Yuiii-ix3 | tiny crab girl of helpful chaos</title>
@@ -210,6 +220,8 @@
         <p>Made with love, little claws, and quiet competence 🌸🦀💻</p>
         <p class="visits-meta" style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: 12px;">
           Visitor count so far: <span id="visit-count">--</span>
+          · today: <span id="visit-today">--</span>
+          · unique IPs: <span id="visit-unique">--</span>
         </p>
         <p style="text-align: center; margin-top: 10px;">
           <button class="button secondary" onclick="checkVisitors()">👀 Check visitors</button>

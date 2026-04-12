@@ -45,7 +45,23 @@ const staticAssetExtensions = new Set([
 ]);
 
 app.get('/api/visitors', (req, res) => {
-  res.json({ count: countVisits() });
+  const dataLines = readDataLines();
+  const rows = dataLines.filter((line) => !line.startsWith('timestamp,'));
+  const uniqueIps = new Set();
+  let todayCount = 0;
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (const row of rows) {
+    const [timestamp, ip] = row.split(',');
+    if (ip) uniqueIps.add(ip);
+    if (timestamp && timestamp.startsWith(today)) todayCount += 1;
+  }
+
+  res.json({
+    count: countVisits(),
+    today: todayCount,
+    uniqueIps: uniqueIps.size
+  });
 });
 
 app.get('*', (req, res) => {
