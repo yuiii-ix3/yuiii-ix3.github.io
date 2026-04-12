@@ -207,6 +207,10 @@ h2 {
   background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,236,245,0.98));
 }
 
+:root[data-theme='dark'] .announcement {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.96));
+}
+
 .announcement p {
   margin: 0;
 }
