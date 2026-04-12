@@ -8,9 +8,11 @@
       content="A soft, cute landing page all about Yui, a tiny crab girl of helpful chaos."
     />
     <script>
+      const VISITOR_API_URL = window.VISITOR_API_URL || './api/visitors';
+
       async function loadVisitorStats() {
         try {
-          const res = await fetch('./api/visitors');
+          const res = await fetch(VISITOR_API_URL);
           const data = await res.json();
           const target = document.getElementById('visit-count');
           const todayTarget = document.getElementById('visit-today');
