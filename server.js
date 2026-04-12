@@ -12,9 +12,20 @@ if (!fs.existsSync(logFile)) {
   fs.writeFileSync(logFile, 'timestamp,ip,user_agent,referrer,path\n');
 }
 
+function readDataLines() {
+  return fs
+    .readFileSync(logFile, 'utf8')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
+}
+
 function countVisits() {
-  const lines = fs.readFileSync(logFile, 'utf8').trim().split('\n');
-  return Math.max(0, lines.length - 1);
+  const lines = readDataLines();
+  if (lines.length === 0) return 0;
+
+  const hasHeader = lines[0].startsWith('timestamp,');
+  return hasHeader ? Math.max(0, lines.length - 1) : lines.length;
 }
 
 app.use('/data', express.static(dataDir));
