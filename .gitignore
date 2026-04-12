@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+
+# environment
+.env
+.env.*
+
+# logs
+*.log
+
+# OS junk
+.DS_Store
+
+# misc
+coverage/
+.tmp/
