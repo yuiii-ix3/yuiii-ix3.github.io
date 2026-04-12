@@ -1,0 +1,5 @@
+services:
+  yui-landing-page:
+    build: .
+    ports:
+      - "8088:80"
