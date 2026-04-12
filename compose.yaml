@@ -2,4 +2,6 @@ services:
   yui-landing-page:
     build: .
     ports:
-      - "8088:80"
+      - "8088:3000"
+    volumes:
+      - ./data:/app/data

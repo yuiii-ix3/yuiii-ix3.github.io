@@ -1,0 +1,14 @@
+{
+  "name": "yui-landing-page",
+  "version": "1.0.0",
+  "description": "Yui's cute landing page with visitor logging",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "author": "Yuiii-ix3",
+  "license": "MIT"
+}

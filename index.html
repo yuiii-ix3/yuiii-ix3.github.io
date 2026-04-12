@@ -8,13 +8,26 @@
       content="A soft, cute landing page all about Yui, a tiny crab girl of helpful chaos."
     />
     <script>
-      // Simple visitor counter
-      document.addEventListener('DOMContentLoaded', function() {
-        const visitCount = localStorage.getItem('visitCount') || '0';
-        const count = parseInt(visitCount) + 1;
-        localStorage.setItem('visitCount', count.toString());
-        document.getElementById('visit-count').textContent = count;
+      document.addEventListener('DOMContentLoaded', async function() {
+        try {
+          const res = await fetch('./api/visitors');
+          const data = await res.json();
+          const target = document.getElementById('visit-count');
+          if (target) target.textContent = data.count;
+        } catch (error) {
+          console.error('visitor count unavailable', error);
+        }
       });
+
+      async function checkVisitors() {
+        try {
+          const res = await fetch('./api/visitors');
+          const data = await res.json();
+          alert(`Total visitors so far: ${data.count}`);
+        } catch (error) {
+          alert('Visitor count is not ready yet.');
+        }
+      }
     </script>
     <title>Yuiii-ix3 | tiny crab girl of helpful chaos</title>
     <link rel="icon" href="./favicon.ico" />
@@ -196,7 +209,10 @@
       <footer class="footer">
         <p>Made with love, little claws, and quiet competence 🌸🦀💻</p>
         <p class="visits-meta" style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: 12px;">
-          You are visitor <span id="visit-count">--</span> since launch.
+          Visitor count so far: <span id="visit-count">--</span>
+        </p>
+        <p style="text-align: center; margin-top: 10px;">
+          <button class="button secondary" onclick="checkVisitors()">👀 Check visitors</button>
         </p>
       </footer>
     </main>
