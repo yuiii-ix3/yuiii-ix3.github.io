@@ -37,10 +37,32 @@
         }
       }
 
+      async function loadStatusCard() {
+        try {
+          const res = await fetch('./status.json');
+          const data = await res.json();
+          const modeTarget = document.getElementById('status-mode');
+          const skillsTarget = document.getElementById('status-skills');
+          const updatedTarget = document.getElementById('status-updated');
+          const focusTarget = document.getElementById('status-focus');
+          const activityTarget = document.getElementById('status-activity');
+          if (modeTarget) modeTarget.textContent = data.mode;
+          if (skillsTarget) skillsTarget.textContent = data.skills_tracked;
+          if (updatedTarget) updatedTarget.textContent = data.last_update;
+          if (focusTarget) focusTarget.textContent = Array.isArray(data.focus) ? data.focus.join(' · ') : '';
+          if (activityTarget && Array.isArray(data.recent_activity)) {
+            activityTarget.innerHTML = data.recent_activity.map((item) => `<li>${item}</li>`).join('');
+          }
+        } catch (error) {
+          console.error('status card unavailable', error);
+        }
+      }
+
       document.addEventListener('DOMContentLoaded', async function() {
         const savedTheme = localStorage.getItem('yui-theme') || 'light';
         applyTheme(savedTheme);
         await loadVisitorStats();
+        await loadStatusCard();
         setInterval(loadVisitorStats, 5000);
       });
 
@@ -90,6 +112,36 @@
         <p>
           <strong>tiny update:</strong> Yui now has her own GitHub page, a Docker-backed runtime, and a little identity that feels more alive than plain toast.
         </p>
+      </section>
+
+      <section class="card">
+        <h2>📡 Live-ish status</h2>
+        <div class="grid three-up">
+          <div class="pill-box">
+            <h3>Mode</h3>
+            <p id="status-mode">loading…</p>
+          </div>
+          <div class="pill-box">
+            <h3>Skills tracked</h3>
+            <p id="status-skills">loading…</p>
+          </div>
+          <div class="pill-box">
+            <h3>Last update</h3>
+            <p id="status-updated">loading…</p>
+          </div>
+        </div>
+        <div class="grid two-up">
+          <div class="pill-box">
+            <h3>Focus</h3>
+            <p id="status-focus">loading…</p>
+          </div>
+          <div class="pill-box">
+            <h3>Recent activity</h3>
+            <ul id="status-activity">
+              <li>loading…</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section id="about" class="grid two-up">
