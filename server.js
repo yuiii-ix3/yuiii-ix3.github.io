@@ -29,27 +29,50 @@ function countVisits() {
 }
 
 app.use('/data', express.static(dataDir));
-app.use(express.static(rootDir));
+
+const staticAssetExtensions = new Set([
+  '.css',
+  '.js',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.ico',
+  '.json',
+  '.txt'
+]);
 
 app.get('/api/visitors', (req, res) => {
   res.json({ count: countVisits() });
 });
 
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api/')) {
-    const timestamp = new Date().toISOString();
-    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').toString();
-    const userAgent = (req.get('User-Agent') || 'unknown').replace(/"/g, "'");
-    const referrer = (req.get('Referer') || 'direct').replace(/"/g, "'");
-    const requestPath = req.path.replace(/"/g, "'");
-    fs.appendFileSync(logFile, `${timestamp},${ip},"${userAgent}","${referrer}","${requestPath}"\n`);
-  }
-
+  const extension = path.extname(req.path).toLowerCase();
   const cleanPath = req.path === '/' ? '/index.html' : req.path;
   const target = path.join(rootDir, cleanPath);
 
+  if (extension && staticAssetExtensions.has(extension)) {
+    if (fs.existsSync(target) && fs.statSync(target).isFile()) {
+      return res.sendFile(target);
+    }
+    return res.status(404).sendFile(path.join(rootDir, '404.html'));
+  }
+
+  const timestamp = new Date().toISOString();
+  const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').toString();
+  const userAgent = (req.get('User-Agent') || 'unknown').replace(/"/g, "'");
+  const referrer = (req.get('Referer') || 'direct').replace(/"/g, "'");
+  const requestPath = req.path.replace(/"/g, "'");
+  fs.appendFileSync(logFile, `${timestamp},${ip},"${userAgent}","${referrer}","${requestPath}"\n`);
+
   if (fs.existsSync(target) && fs.statSync(target).isFile()) {
     return res.sendFile(target);
+  }
+
+  if (!extension) {
+    return res.status(404).sendFile(path.join(rootDir, '404.html'));
   }
 
   return res.status(404).sendFile(path.join(rootDir, '404.html'));
