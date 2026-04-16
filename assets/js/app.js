@@ -71,12 +71,16 @@
   }
 
   async function checkVisitors() {
-    const data = await loadVisitorStats();
-    if (!data) {
-      alert('Visitor count is not ready yet.');
-      return;
+    const statsPanel = document.getElementById('visitor-stats-panel');
+    if (!statsPanel) return;
+
+    if (statsPanel.style.display === 'none') {
+      await loadVisitorStats();
+      statsPanel.style.display = 'block';
+      statsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      statsPanel.style.display = 'none';
     }
-    alert(`Human-ish visits so far: ${data.humanCount}\nToday: ${data.humanToday}\nHuman-ish IPs: ${data.humanUniqueIps}\n\nAll hits: ${data.count}\nSuspicious / bots: ${data.suspiciousCount}`);
   }
 
   window.toggleTheme = toggleTheme;
@@ -94,6 +98,6 @@
     applyTheme(getPreferredTheme());
     await loadVisitorStats();
     await loadStatusCard();
-    setInterval(loadVisitorStats, 5000);
+    setInterval(loadVisitorStats, 30000); // Less frequent auto-update
   });
 })();
