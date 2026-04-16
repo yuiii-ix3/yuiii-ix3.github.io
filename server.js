@@ -20,12 +20,73 @@ function readDataLines() {
     .filter((line) => line && !line.startsWith('#'));
 }
 
-function countVisits() {
-  const lines = readDataLines();
-  if (lines.length === 0) return 0;
+function parseCsvRow(row) {
+  const match = row.match(/^([^,]*),([^,]*),"([\s\S]*)","([\s\S]*)","([\s\S]*)"$/);
+  if (!match) return null;
+  const [, timestamp, ip, userAgent, referrer, requestPath] = match;
+  return { timestamp, ip, userAgent, referrer, requestPath };
+}
 
-  const hasHeader = lines[0].startsWith('timestamp,');
-  return hasHeader ? Math.max(0, lines.length - 1) : lines.length;
+function getVisitEntries() {
+  return readDataLines()
+    .filter((line) => !line.startsWith('timestamp,'))
+    .map(parseCsvRow)
+    .filter(Boolean);
+}
+
+function isBotLike(userAgent = '') {
+  return /bot|spider|crawler|scan|curl|wget|python|axios|httpclient|go-http-client|node-fetch|headless|leakix/i.test(userAgent);
+}
+
+function isSuspiciousPath(requestPath = '') {
+  return /^\/(\.env|wp-admin|wp-login|xmlrpc\.php|boaform|cgi-bin|actuator|vendor|phpmyadmin|manager|server-status|config|\.git)/i.test(requestPath);
+}
+
+function isHumanLikeVisit(entry) {
+  if (!entry) return false;
+  if (isBotLike(entry.userAgent)) return false;
+  if (isSuspiciousPath(entry.requestPath)) return false;
+  return entry.requestPath === '/' || entry.requestPath === '/index.html';
+}
+
+function summarizeVisits(entries) {
+  const today = new Date().toISOString().slice(0, 10);
+  const totalUniqueIps = new Set();
+  const humanUniqueIps = new Set();
+  const suspiciousUniqueIps = new Set();
+  let todayCount = 0;
+  let humanCount = 0;
+  let humanToday = 0;
+  let suspiciousCount = 0;
+
+  for (const entry of entries) {
+    if (!entry) continue;
+    if (entry.ip) totalUniqueIps.add(entry.ip);
+    if (entry.timestamp && entry.timestamp.startsWith(today)) todayCount += 1;
+
+    if (isHumanLikeVisit(entry)) {
+      humanCount += 1;
+      if (entry.ip) humanUniqueIps.add(entry.ip);
+      if (entry.timestamp && entry.timestamp.startsWith(today)) humanToday += 1;
+      continue;
+    }
+
+    if (isBotLike(entry.userAgent) || isSuspiciousPath(entry.requestPath)) {
+      suspiciousCount += 1;
+      if (entry.ip) suspiciousUniqueIps.add(entry.ip);
+    }
+  }
+
+  return {
+    count: entries.length,
+    today: todayCount,
+    uniqueIps: totalUniqueIps.size,
+    humanCount,
+    humanToday,
+    humanUniqueIps: humanUniqueIps.size,
+    suspiciousCount,
+    suspiciousUniqueIps: suspiciousUniqueIps.size
+  };
 }
 
 app.use('/data', express.static(dataDir));
@@ -45,23 +106,8 @@ const staticAssetExtensions = new Set([
 ]);
 
 app.get('/api/visitors', (req, res) => {
-  const dataLines = readDataLines();
-  const rows = dataLines.filter((line) => !line.startsWith('timestamp,'));
-  const uniqueIps = new Set();
-  let todayCount = 0;
-  const today = new Date().toISOString().slice(0, 10);
-
-  for (const row of rows) {
-    const [timestamp, ip] = row.split(',');
-    if (ip) uniqueIps.add(ip);
-    if (timestamp && timestamp.startsWith(today)) todayCount += 1;
-  }
-
-  res.json({
-    count: countVisits(),
-    today: todayCount,
-    uniqueIps: uniqueIps.size
-  });
+  const entries = getVisitEntries();
+  res.json(summarizeVisits(entries));
 });
 
 app.get('*', (req, res) => {

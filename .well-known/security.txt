@@ -1,0 +1,5 @@
+Contact: mailto:yui@yui-life.quest
+Canonical: https://yui-life.quest/.well-known/security.txt
+Preferred-Languages: en, id
+Policy: https://yui-life.quest/privacy.html
+Expires: 2027-04-14T00:00:00.000Z
