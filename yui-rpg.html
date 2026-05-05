@@ -1,0 +1,2653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Yui — Quest for Code RPG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a12;--panel:#10101c;--panel2:#14141f;--border:#252538;
+  --accent:#e8936a;--accent2:#7ec8e3;--accent3:#b8e986;
+  --hp:#e86a7e;--mp:#7e9be8;--gold:#f0c060;--text:#d4d0e8;--muted:#6a6888;
+  --shop:#c86ae8;--npc:#68e8b8;--save:#68b8e8;
+}
+body{background:var(--bg);color:var(--text);font-family:'VT323',monospace;font-size:18px;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow:hidden;user-select:none;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:9999;}
+#game-container{width:100vw;max-width:1100px;height:100vh;display:flex;flex-direction:column;}
+#topbar{background:var(--panel);border-bottom:2px solid var(--border);padding:6px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;}
+#topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.4;}
+#topbar .logo{font-family:'Press Start 2P',monospace;font-size:8px;color:#e8936a;letter-spacing:1px;}
+#topbar .logo span{color:var(--accent2);}
+#save-indicator{font-size:13px;color:var(--save);opacity:0;transition:opacity 0.4s;}
+#save-indicator.show{opacity:1;}
+#tabs{display:flex;gap:2px;}
+.tab-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'VT323',monospace;font-size:16px;padding:3px 12px;cursor:pointer;transition:all 0.15s;}
+.tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.tab-btn:hover:not(.active){color:var(--text);border-color:var(--accent2);}
+.tab-btn.shop-tab{border-color:var(--shop);}
+.tab-btn.shop-tab.active{background:var(--shop);border-color:var(--shop);}
+.tab-btn.shop-tab:hover:not(.active){color:var(--shop);}
+#main{display:flex;flex:1;overflow:hidden;}
+#left-panel{width:200px;flex-shrink:0;background:var(--panel);border-right:2px solid var(--border);display:flex;flex-direction:column;padding:10px;gap:10px;overflow-y:auto;overflow-x:hidden;}
+.panel-title{font-size:13px;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:3px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.stat-row{display:flex;justify-content:space-between;font-size:16px;margin:2px 0;}
+.stat-val{color:var(--accent);}
+.bar-wrap{margin:3px 0;}
+.bar-label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:2px;}
+.bar{height:8px;background:#1a1a28;border:1px solid var(--border);border-radius:1px;overflow:hidden;}
+.bar-fill{height:100%;transition:width 0.3s;}
+.bar-hp .bar-fill{background:linear-gradient(90deg,#c0405a,var(--hp));}
+.bar-mp .bar-fill{background:linear-gradient(90deg,#4060c8,var(--mp));}
+.bar-xp .bar-fill{background:linear-gradient(90deg,#70a040,var(--accent3));}
+#minimap-canvas{display:block;border:1px solid var(--border);image-rendering:pixelated;width:160px;height:120px;}
+.skill-entry{background:var(--bg);border:1px solid var(--border);padding:4px 6px;margin-bottom:4px;font-size:14px;cursor:pointer;transition:all 0.15s;}
+.skill-entry:hover{border-color:var(--mp);background:#12121e;}
+.skill-entry.selected{border-color:var(--accent2);background:#14182a;}
+.skill-mp{color:var(--mp);font-size:13px;}
+.skill-locked{opacity:0.3;cursor:default;}
+#save-btn-bar{background:transparent;border:1px solid var(--save);color:var(--save);font-family:'VT323',monospace;font-size:16px;padding:3px 10px;cursor:pointer;transition:all 0.15s;width:100%;margin-top:4px;}
+#save-btn-bar:hover{background:var(--save);color:#000;}
+#last-save-time{font-size:12px;color:var(--muted);margin-top:4px;}
+#center{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+#world-canvas{display:block;image-rendering:pixelated;background:#050510;}
+#battle-screen{position:absolute;inset:0;background:radial-gradient(ellipse at center,#0e0820 0%,#04040a 100%);display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:20px;}
+#battle-screen.active{display:flex;}
+#battle-arena{display:flex;justify-content:space-around;align-items:flex-end;width:100%;flex:1;padding:20px 0;position:relative;}
+#battle-arena::before{content:'';position:absolute;bottom:0;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+.combatant{text-align:center;}
+.combatant-sprite{font-size:64px;display:block;line-height:1;margin-bottom:8px;animation:idle 2s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));}
+.combatant-sprite.shake{animation:shake 0.3s ease-in-out;}
+@keyframes idle{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.combatant-name{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--accent);margin-bottom:4px;}
+.combatant-bars{width:140px;margin:0 auto;}
+#battle-log{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:8px 12px;width:100%;min-height:70px;font-size:16px;color:var(--text);line-height:1.4;}
+#battle-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;}
+.action-btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'VT323',monospace;font-size:18px;padding:8px 18px;cursor:pointer;transition:all 0.15s;min-width:90px;}
+.action-btn:hover{background:var(--accent);color:#000;border-color:var(--accent);transform:translateY(-1px);}
+.action-btn:disabled{opacity:0.25;cursor:default;transform:none;}
+.action-btn.skill-act{border-color:var(--mp);}
+.action-btn.skill-act:hover{background:var(--mp);border-color:var(--mp);}
+.action-btn.run-act{border-color:var(--muted);}
+#right-panel{width:220px;flex-shrink:0;background:var(--panel);border-left:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+#right-tabs{display:flex;border-bottom:1px solid var(--border);}
+.rpanel-tab{flex:1;background:transparent;border:none;border-right:1px solid var(--border);color:var(--muted);font-family:'VT323',monospace;font-size:16px;padding:6px 4px;cursor:pointer;text-align:center;transition:all 0.15s;}
+.rpanel-tab:last-child{border-right:none;}
+.rpanel-tab.active{color:var(--accent);background:var(--bg);}
+#right-content{flex:1;overflow-y:auto;padding:8px;}
+.item-slot{background:var(--bg);border:1px solid var(--border);padding:5px 7px;margin-bottom:4px;display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;transition:all 0.15s;position:relative;}
+.item-slot:hover{border-color:var(--gold);background:#12120e;}
+.item-icon{font-size:20px;}
+.item-info{flex:1;min-width:0;}
+.item-name{color:var(--gold);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.item-stats{color:var(--muted);font-size:13px;}
+.item-qty{color:var(--accent2);font-size:14px;min-width:20px;text-align:right;}
+.equip-section{margin-bottom:10px;}
+.equip-label{font-size:13px;color:var(--muted);margin-bottom:3px;}
+.equip-slot{background:var(--bg);border:1px solid var(--border);padding:6px 8px;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:36px;transition:border-color 0.15s;}
+.equip-slot:hover{border-color:var(--accent);}
+.equip-slot .slot-empty{color:var(--muted);font-size:14px;}
+.log-entry{font-size:15px;color:var(--text);margin-bottom:3px;line-height:1.3;}
+.log-entry.combat{color:#e86a7e;}.log-entry.loot{color:var(--gold);}.log-entry.level{color:var(--accent3);font-family:'Press Start 2P',monospace;font-size:8px;}.log-entry.heal{color:#7ee8b8;}.log-entry.system{color:var(--muted);}.log-entry.shop{color:var(--shop);}.log-entry.npc{color:var(--npc);}.log-entry.save{color:var(--save);}
+#controls-bar{background:var(--panel);border-top:1px solid var(--border);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+#location-info{font-size:16px;color:var(--accent2);}
+#help-text{font-size:14px;color:var(--muted);}
+#ctrl-save-btn{background:transparent;border:1px solid var(--save);color:var(--save);font-family:'VT323',monospace;font-size:16px;padding:3px 10px;cursor:pointer;transition:all 0.15s;}
+#ctrl-save-btn:hover{background:var(--save);color:#000;}
+#joystick-wrap{display:none;position:fixed;bottom:80px;left:20px;z-index:100;}
+#dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:3px;}
+.dpad-btn{background:rgba(20,20,38,0.88);border:1px solid var(--border);color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;-webkit-tap-highlight-color:transparent;transition:all 0.1s;}
+.dpad-btn:active{background:var(--accent);color:#000;border-color:var(--accent);}
+.dpad-center{background:#080814;}
+#interact-btn-mobile{display:none;position:fixed;bottom:80px;right:20px;z-index:100;background:rgba(104,232,184,0.15);border:2px solid var(--npc);color:var(--npc);font-family:'VT323',monospace;font-size:20px;padding:10px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+#interact-btn-mobile:active{background:var(--npc);color:#000;}
+#popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,8,0.78);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+#popup-overlay.active{display:flex;}
+#popup-box{background:var(--panel);border:2px solid var(--accent);padding:20px;max-width:380px;width:92%;font-size:18px;box-shadow:0 0 40px rgba(232,147,106,0.18),0 20px 60px rgba(0,0,0,0.7);position:relative;}
+#popup-title{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--accent);margin-bottom:12px;}
+#popup-title.npc-title{color:var(--npc);}
+#popup-body{line-height:1.6;margin-bottom:14px;color:var(--text);}
+#popup-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.popup-btn{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'VT323',monospace;font-size:18px;padding:6px 14px;cursor:pointer;transition:all 0.15s;}
+.popup-btn:hover{background:var(--accent);color:#000;border-color:var(--accent);}
+.popup-btn.confirm{border-color:var(--accent3);}
+.popup-btn.confirm:hover{background:var(--accent3);color:#000;}
+.popup-btn.danger{border-color:var(--hp);}
+.popup-btn.danger:hover{background:var(--hp);color:#000;}
+/* SHOP */
+#shop-screen{position:absolute;inset:0;background:radial-gradient(ellipse at top,#160c24 0%,#06060e 100%);display:none;flex-direction:column;overflow:hidden;}
+#shop-screen.active{display:flex;}
+#shop-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+#shop-header .shop-name{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--shop);}
+#shop-gold-display{font-size:18px;color:var(--gold);}
+#shop-close{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'VT323',monospace;font-size:18px;padding:4px 12px;cursor:pointer;transition:all 0.15s;}
+#shop-close:hover{border-color:var(--hp);color:var(--hp);}
+#shop-tabs{display:flex;border-bottom:1px solid var(--border);}
+.shop-tab-btn{flex:1;background:transparent;border:none;border-right:1px solid var(--border);color:var(--muted);font-family:'VT323',monospace;font-size:16px;padding:6px 4px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.shop-tab-btn:last-child{border-right:none;}
+.shop-tab-btn.active{color:var(--shop);background:rgba(200,106,232,0.08);}
+#shop-content{flex:1;overflow-y:auto;padding:10px;}
+.shop-item{background:rgba(200,106,232,0.06);border:1px solid rgba(200,106,232,0.2);padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;transition:all 0.15s;cursor:pointer;}
+.shop-item:hover{border-color:var(--shop);background:rgba(200,106,232,0.12);}
+.shop-item-icon{font-size:24px;}
+.shop-item-info{flex:1;}
+.shop-item-name{font-size:16px;color:var(--text);}
+.shop-item-stat{font-size:13px;color:var(--muted);}
+.shop-item-price{font-size:18px;color:var(--gold);white-space:nowrap;}
+.shop-item-price.cant-afford{color:var(--hp);}
+#shop-npc-msg{padding:8px 14px;font-size:16px;color:var(--shop);background:rgba(200,106,232,0.05);border-top:1px solid var(--border);font-style:italic;min-height:36px;}
+/* NPC */
+#npc-dialogue{position:absolute;bottom:60px;left:20px;right:20px;background:rgba(10,10,20,0.97);border:2px solid var(--npc);padding:12px 14px;z-index:80;display:none;box-shadow:0 0 20px rgba(104,232,184,0.15);}
+#npc-dialogue.active{display:block;}
+#npc-dialogue .npc-name{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--npc);margin-bottom:6px;}
+#npc-dialogue .npc-text{font-size:17px;color:var(--text);line-height:1.4;}
+#npc-dialogue .npc-choices{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+.npc-choice-btn{background:rgba(104,232,184,0.1);border:1px solid var(--npc);color:var(--npc);font-family:'VT323',monospace;font-size:17px;padding:4px 12px;cursor:pointer;transition:all 0.15s;}
+.npc-choice-btn:hover{background:var(--npc);color:#000;}
+/* FLASH */
+#flash{position:absolute;inset:0;pointer-events:none;opacity:0;background:#e86a7e;z-index:50;transition:opacity 0.12s;}
+/* ACHIEVEMENT */
+#achievement-toast{position:fixed;top:60px;right:12px;background:var(--panel);border:1px solid var(--gold);padding:8px 14px;z-index:300;font-size:15px;color:var(--gold);box-shadow:0 4px 20px rgba(240,192,96,0.2);transform:translateX(120%);transition:transform 0.3s ease;max-width:220px;}
+#achievement-toast.show{transform:translateX(0);}
+#achievement-toast .ach-title{font-family:'Press Start 2P',monospace;font-size:6px;color:var(--accent3);margin-bottom:4px;}
+/* ── DESKTOP RESPONSIVE ── */
+@media(max-width:900px){#left-panel{width:170px;}#right-panel{width:180px;}}
+@media(max-width:700px){#left-panel{width:140px;}#right-panel{width:150px;}#help-text{display:none;}}
+@media(max-width:560px){#left-panel{display:none;}#right-panel{display:none;}}
+
+/* ── MOBILE BASE: hide desktop chrome ── */
+#mobile-hud,#mobile-nav,#mobile-drawer{display:none;}
+
+/* ── MOBILE BREAKPOINT ── */
+@media(max-width:760px){
+  /* Root layout */
+  html,body{
+    width:100%;height:100%;min-height:100%;
+    overflow:hidden;overscroll-behavior:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  body{font-size:16px;touch-action:none;}
+  #game-container{
+    width:100dvw;height:100dvh;max-width:none;
+    display:flex;flex-direction:column;
+  }
+
+  /* Topbar — compact, no tab overflow */
+  #topbar{
+    min-height:44px;padding:6px 10px;gap:6px;flex-shrink:0;
+  }
+  #topbar .logo{
+    font-size:clamp(6px,2vw,8px);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    max-width:34vw;
+  }
+  #save-indicator{font-size:12px;}
+  #tabs{gap:3px;flex-shrink:0;}
+  .tab-btn{
+    min-height:32px;min-width:44px;
+    padding:4px 8px;font-size:15px;
+    border-radius:6px;white-space:nowrap;
+  }
+  #ctrl-save-btn{display:none;}
+
+  /* Main area fills remaining space */
+  #main{position:relative;flex:1;min-height:0;overflow:hidden;}
+  #left-panel,#right-panel{display:none;}
+  #center{position:absolute;inset:0;}
+  #world-canvas{width:100%;height:100%;display:block;}
+
+  /* ── MOBILE HUD (top overlay) ── */
+  #mobile-hud{
+    display:flex;flex-direction:column;gap:4px;
+    position:fixed;top:48px;left:8px;right:8px;
+    z-index:80;pointer-events:none;
+  }
+  .mobile-card{
+    background:rgba(10,10,18,0.88);
+    border:1px solid rgba(37,37,56,0.8);
+    border-radius:10px;padding:5px 10px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    display:flex;flex-direction:column;gap:3px;
+  }
+  .mobile-card .bar{height:6px;border-radius:3px;}
+  .mobile-card .bar-label{font-size:12px;margin-bottom:1px;}
+  .mobile-statline{
+    display:flex;justify-content:space-between;
+    font-size:14px;color:var(--accent2);
+    white-space:nowrap;gap:4px;
+  }
+
+  /* Controls bar — keep location, hide rest */
+  #controls-bar{
+    display:none; /* replaced by mobile-nav */
+  }
+
+  /* ── D-PAD ── */
+  #joystick-wrap{
+    display:block;
+    position:fixed;
+    left:12px;
+    bottom:calc(96px + env(safe-area-inset-bottom,0px));
+    z-index:220;
+    pointer-events:auto;
+  }
+  #dpad{
+    display:grid;
+    grid-template-columns:repeat(3,52px);
+    grid-template-rows:repeat(3,52px);
+    gap:3px;
+  }
+  .dpad-btn{
+    min-width:52px;min-height:52px;
+    border-radius:12px;
+    background:rgba(16,16,36,0.85);
+    border:1px solid rgba(37,37,56,0.9);
+    color:var(--text);font-size:22px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:background 0.1s;
+    /* Larger touch target */
+    touch-action:none;
+  }
+  .dpad-btn:active{background:var(--accent);color:#000;border-color:var(--accent);}
+  .dpad-center{
+    border-radius:12px;
+    background:rgba(8,8,16,0.6);
+    border:1px solid rgba(37,37,56,0.5);
+  }
+
+  /* ── INTERACT BUTTON ── */
+  #interact-btn-mobile{
+    display:flex;align-items:center;justify-content:center;
+    position:fixed;
+    right:12px;
+    bottom:calc(96px + env(safe-area-inset-bottom,0px));
+    z-index:220;
+    width:80px;height:80px;
+    border-radius:50%;
+    background:rgba(104,232,184,0.12);
+    border:2px solid var(--npc);
+    color:var(--npc);
+    font-family:'VT323',monospace;font-size:14px;
+    text-align:center;line-height:1.2;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+    flex-direction:column;gap:2px;
+  }
+  #interact-btn-mobile:active{background:var(--npc);color:#000;}
+
+  /* ── MOBILE NAV BAR ── */
+  #mobile-nav{
+    display:flex;
+    position:fixed;
+    left:0;right:0;
+    bottom:0;
+    height:calc(64px + env(safe-area-inset-bottom,0px));
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
+    gap:4px;
+    background:rgba(10,10,18,0.97);
+    border-top:1px solid var(--border);
+    z-index:160;
+    pointer-events:auto;
+  }
+  .mobile-nav-btn{
+    flex:1;
+    min-height:52px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(20,20,32,0.9);
+    color:var(--text);
+    font-family:'VT323',monospace;font-size:13px;
+    -webkit-tap-highlight-color:transparent;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;
+    cursor:pointer;touch-action:manipulation;
+  }
+  .mobile-nav-btn .nav-icon{font-size:20px;line-height:1;}
+  .mobile-nav-btn.active{
+    background:var(--accent);border-color:var(--accent);color:#000;
+  }
+  .mobile-nav-btn.shop-nav{border-color:rgba(200,106,232,0.5);}
+  .mobile-nav-btn.shop-nav.active{background:var(--shop);border-color:var(--shop);color:#000;}
+  .mobile-nav-btn.save-nav{border-color:rgba(104,184,232,0.5);}
+  .mobile-nav-btn.save-nav.active{background:var(--save);border-color:var(--save);color:#000;}
+
+  /* ── MOBILE DRAWER (slides up from nav) ── */
+  #mobile-drawer{
+    display:block;
+    position:fixed;
+    left:0;right:0;
+    bottom:0;
+    /* Sits above the nav bar */
+    padding-bottom:calc(64px + env(safe-area-inset-bottom,0px));
+    max-height:72dvh;
+    z-index:155;
+    background:rgba(12,12,22,0.99);
+    border-top:2px solid var(--accent);
+    border-radius:18px 18px 0 0;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.6);
+    overflow:hidden;
+    transform:translateY(100%);
+    transition:transform 0.25s cubic-bezier(0.32,0.72,0,1);
+    pointer-events:auto;
+  }
+  #mobile-drawer.open{transform:translateY(0);}
+  #mobile-drawer-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 16px 8px;
+    border-bottom:1px solid var(--border);
+    color:var(--accent);
+    font-family:'Press Start 2P',monospace;font-size:8px;
+    position:sticky;top:0;
+    background:rgba(12,12,22,0.99);z-index:2;
+  }
+  #mobile-drawer-close{
+    background:rgba(37,37,56,0.6);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;
+    min-width:36px;min-height:36px;font-size:20px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;touch-action:manipulation;
+  }
+  #mobile-content{
+    height:calc(72dvh - 52px - 64px - env(safe-area-inset-bottom,0px));
+    overflow-y:auto;padding:10px 12px;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
+  /* Drawer item sizes */
+  #mobile-content .item-slot,
+  #mobile-content .equip-slot,
+  #mobile-content .skill-entry{
+    min-height:52px;font-size:17px;
+    border-radius:10px;margin-bottom:8px;
+  }
+  #mobile-content .item-icon{font-size:22px;}
+  #mobile-content .item-name{font-size:16px;}
+  #mobile-content .item-stats,
+  #mobile-content .skill-mp{font-size:14px;}
+  #mobile-content .shop-item{
+    min-height:56px;border-radius:10px;margin-bottom:8px;
+    padding:10px 12px;
+  }
+  #mobile-content .shop-item-icon{font-size:26px;}
+  #mobile-content .shop-item-name{font-size:17px;}
+  #mobile-content .shop-item-price{font-size:17px;}
+
+  /* ── BATTLE SCREEN ── */
+  #battle-screen{
+    padding:10px 12px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    display:none;flex-direction:column;
+    justify-content:space-between;
+  }
+  #battle-screen.active{display:flex;}
+  #battle-arena{
+    flex:1;align-items:center;
+    gap:4px;padding:6px 0;
+    min-height:0;
+  }
+  .combatant-sprite{
+    font-size:clamp(38px,13vw,60px);
+    margin-bottom:4px;
+  }
+  .combatant-bars{width:clamp(100px,32vw,140px);}
+  .combatant-name{font-size:6px;}
+  #battle-log{
+    min-height:60px;max-height:80px;
+    font-size:16px;border-radius:10px;
+    overflow-y:auto;flex-shrink:0;
+  }
+  #battle-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    width:100%;gap:6px;
+    flex-shrink:0;
+    margin-top:8px;
+  }
+  .action-btn{
+    min-width:0;min-height:52px;
+    padding:10px 8px;border-radius:12px;
+    font-size:18px;touch-action:manipulation;
+  }
+
+  /* ── SHOP SCREEN (full screen on mobile) ── */
+  #shop-screen{
+    /* Already position:absolute inset:0 from base CSS */
+    display:none;flex-direction:column;
+    padding-bottom:0;
+  }
+  #shop-screen.active{display:flex;}
+  #shop-header{
+    padding:12px 14px 10px;
+    flex-shrink:0;
+  }
+  #shop-header .shop-name{font-size:8px;}
+  #shop-gold-display{font-size:17px;}
+  #shop-close{
+    min-height:36px;padding:4px 14px;
+    font-size:18px;border-radius:8px;
+    touch-action:manipulation;
+  }
+  #shop-tabs{flex-shrink:0;}
+  .shop-tab-btn{
+    font-size:17px;padding:10px 4px;
+    min-height:44px;touch-action:manipulation;
+  }
+  #shop-content{
+    flex:1;overflow-y:auto;
+    padding:10px 12px;
+    /* Bottom padding to clear the mobile nav */
+    padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));
+    -webkit-overflow-scrolling:touch;
+  }
+  .shop-item{
+    min-height:58px;padding:10px 12px;
+    border-radius:10px;margin-bottom:8px;
+    touch-action:manipulation;
+  }
+  .shop-item-icon{font-size:28px;}
+  .shop-item-name{font-size:17px;}
+  .shop-item-stat{font-size:14px;}
+  .shop-item-price{font-size:18px;}
+  #shop-npc-msg{
+    font-size:15px;padding:8px 14px;
+    flex-shrink:0;
+    /* hide behind nav — use padding-bottom on shop-content instead */
+    display:none;
+  }
+
+  /* ── NPC DIALOGUE ── */
+  #npc-dialogue{
+    position:fixed;
+    left:8px;right:8px;
+    bottom:calc(72px + env(safe-area-inset-bottom,0px));
+    border-radius:14px;
+    padding:14px 16px;
+    z-index:140;
+  }
+  .npc-choice-btn{
+    min-height:40px;padding:6px 16px;
+    font-size:18px;border-radius:8px;
+    touch-action:manipulation;
+  }
+
+  /* ── POPUPS ── */
+  #popup-box{
+    max-width:min(94vw,380px);
+    border-radius:14px;padding:18px 16px;
+    margin:0 8px;
+  }
+  #popup-title{font-size:8px;margin-bottom:10px;}
+  #popup-body{font-size:16px;margin-bottom:12px;}
+  .popup-btn{
+    min-height:44px;border-radius:10px;
+    font-size:18px;padding:8px 16px;
+    touch-action:manipulation;
+  }
+
+  /* ── ACHIEVEMENT TOAST ── */
+  #achievement-toast{
+    top:auto;
+    bottom:calc(72px + env(safe-area-inset-bottom,0px) + 8px);
+    right:8px;left:8px;
+    max-width:none;
+    border-radius:10px;
+    font-size:16px;
+    transform:translateY(20px);
+    opacity:0;
+    transition:transform 0.3s ease, opacity 0.3s ease;
+  }
+  #achievement-toast.show{transform:translateY(0);opacity:1;}
+}
+
+/* ── SMALL PHONES ── */
+@media(max-width:390px){
+  #joystick-wrap{bottom:calc(92px + env(safe-area-inset-bottom,0px));}
+  #interact-btn-mobile{bottom:calc(92px + env(safe-area-inset-bottom,0px));}
+  #dpad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);}
+  .dpad-btn{min-width:46px;min-height:46px;font-size:20px;}
+  #interact-btn-mobile{width:70px;height:70px;font-size:13px;}
+  .mobile-nav-btn{font-size:12px;}
+  .mobile-nav-btn .nav-icon{font-size:18px;}
+  .action-btn{min-height:46px;font-size:17px;}
+  #mobile-hud{top:44px;}
+}
+@media(max-width:340px){
+  #interact-btn-mobile{width:60px;height:60px;font-size:12px;}
+  #dpad{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);}
+  .dpad-btn{min-width:42px;min-height:42px;}
+}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+
+/* === Mobile escape + stacking polish patch === */
+@media(max-width:760px){
+  /* Keep game overlays above the mobile nav when they are active. */
+  #shop-screen.active,#battle-screen.active{
+    position:absolute;
+    inset:0;
+    z-index:180;
+  }
+
+  /* The old shop header could squeeze the Leave button off-screen on narrow phones. */
+  #shop-header{
+    display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-areas:
+      "name close"
+      "gold close";
+    gap:4px 8px;
+    align-items:center;
+    min-height:62px;
+    padding:10px 12px;
+    background:rgba(12,8,22,0.98);
+    position:sticky;
+    top:0;
+    z-index:220;
+  }
+  #shop-header .shop-name{
+    grid-area:name;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:clamp(7px,2.2vw,9px);
+  }
+  #shop-gold-display{grid-area:gold;font-size:16px;}
+  #shop-close{
+    grid-area:close;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:76px;
+    min-height:44px;
+    padding:6px 10px;
+    border-radius:12px;
+    background:rgba(8,8,16,0.96);
+    border:2px solid var(--hp);
+    color:var(--hp);
+    z-index:230;
+    pointer-events:auto;
+  }
+
+  /* Extra escape hatch above the bottom nav. */
+  #mobile-shop-leave{
+    display:flex;
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:calc(72px + env(safe-area-inset-bottom,0px));
+    z-index:240;
+    min-height:48px;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    border:2px solid var(--hp);
+    background:rgba(10,10,18,0.96);
+    color:var(--hp);
+    font-family:'VT323',monospace;
+    font-size:20px;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #mobile-shop-leave:active{background:var(--hp);color:#000;}
+
+  /* Leave room so the fixed escape hatch never covers goods/services. */
+  #shop-content{
+    padding-bottom:calc(132px + env(safe-area-inset-bottom,0px));
+  }
+
+  /* Hide world-only controls while overlays are active. JS toggles body classes. */
+  body.in-shop #joystick-wrap,
+  body.in-shop #interact-btn-mobile,
+  body.in-shop #mobile-drawer,
+  body.in-battle #joystick-wrap,
+  body.in-battle #interact-btn-mobile,
+  body.in-battle #mobile-drawer{
+    display:none !important;
+  }
+
+  body.in-shop #mobile-nav .mobile-nav-btn:not(.shop-nav){opacity:0.55;}
+}
+
+@media(max-width:390px){
+  #mobile-shop-leave{min-height:44px;font-size:18px;}
+  #shop-close{min-width:68px;font-size:17px;}
+}
+
+
+/* === Mobile input + visibility hardening patch === */
+@media(max-width:760px){
+  /* Never let the inactive battle layer sit on top of the world. */
+  #battle-screen{display:none !important;}
+  #battle-screen.active{display:flex !important;}
+
+  /* The D-pad is world UI. Keep it above the canvas and below dialogs. */
+  body.in-world #joystick-wrap{display:block !important; z-index:170;}
+  body.in-world #interact-btn-mobile{display:flex !important; z-index:170;}
+  body.in-world #mobile-hud{display:flex !important;}
+
+  /* Battle buttons must be real click/tap targets in DevTools emulation too. */
+  #battle-actions{position:relative; z-index:260; pointer-events:auto;}
+  #battle-actions .action-btn{pointer-events:auto; cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:manipulation;}
+}
+
+
+
+/* === FINAL MOBILE SHOP DRAWER + CONTROL SYNC PATCH === */
+@media(max-width:760px){
+  body.in-shop #mobile-hud,
+  body.in-shop #joystick-wrap,
+  body.in-shop #interact-btn-mobile,
+  body.in-battle #mobile-hud,
+  body.in-battle #joystick-wrap,
+  body.in-battle #interact-btn-mobile{
+    display:none !important;
+  }
+
+  body.in-world #mobile-hud{display:flex !important;}
+  body.in-world #joystick-wrap{display:block !important; z-index:9000 !important;}
+  body.in-world #interact-btn-mobile{display:flex !important; z-index:9000 !important;}
+
+  #shop-screen{
+    position:absolute !important;
+    left:0 !important; right:0 !important; top:0 !important; bottom:0 !important;
+    z-index:9500 !important;
+    background:rgba(6,6,14,0.98) !important;
+    border-top:2px solid var(--shop);
+    border-radius:18px 18px 0 0;
+    box-shadow:0 -10px 40px rgba(0,0,0,0.65);
+    overflow:hidden !important;
+    pointer-events:auto !important;
+  }
+  #shop-screen.active{display:flex !important;}
+
+  #shop-header{
+    position:sticky !important;
+    top:0 !important;
+    z-index:10050 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    grid-template-areas:
+      "name close"
+      "gold close" !important;
+    align-items:center !important;
+    gap:4px 10px !important;
+    min-height:68px !important;
+    padding:10px 12px !important;
+    background:linear-gradient(180deg,rgba(18,10,30,0.99),rgba(10,8,18,0.98)) !important;
+    border-bottom:1px solid rgba(200,106,232,0.35) !important;
+  }
+  #shop-header .shop-name{
+    grid-area:name !important;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:clamp(7px,2.2vw,9px) !important;
+    color:var(--shop) !important;
+  }
+  #shop-gold-display{grid-area:gold !important; font-size:17px !important;}
+  #shop-close{
+    grid-area:close !important;
+    display:flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-width:82px !important;
+    min-height:46px !important;
+    padding:6px 10px !important;
+    border-radius:14px !important;
+    border:2px solid var(--hp) !important;
+    background:rgba(8,8,16,0.98) !important;
+    color:var(--hp) !important;
+    z-index:10060 !important;
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+  }
+
+  #shop-tabs{position:sticky !important; top:68px !important; z-index:10040 !important; background:rgba(8,8,16,0.98) !important;}
+  #shop-content{
+    flex:1 !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:10px 12px calc(128px + env(safe-area-inset-bottom,0px)) !important;
+    touch-action:pan-y !important;
+  }
+
+  #mobile-shop-leave{
+    display:flex !important;
+    position:fixed !important;
+    left:12px !important; right:12px !important;
+    bottom:calc(72px + env(safe-area-inset-bottom,0px)) !important;
+    z-index:10100 !important;
+    min-height:50px !important;
+    align-items:center !important; justify-content:center !important;
+    border-radius:16px !important;
+    border:2px solid var(--hp) !important;
+    background:rgba(10,10,18,0.98) !important;
+    color:var(--hp) !important;
+    font-family:'VT323',monospace !important;
+    font-size:21px !important;
+    box-shadow:0 8px 24px rgba(0,0,0,0.45) !important;
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+    -webkit-tap-highlight-color:transparent !important;
+  }
+  body:not(.in-shop) #mobile-shop-leave{display:none !important;}
+
+  #battle-screen.active{z-index:9600 !important;}
+  #battle-actions{z-index:9700 !important;}
+}
+
+</style>
+</head>
+<body>
+<div id="game-container">
+  <div id="topbar">
+    <div class="logo">&#x1F980; <span>yui</span>/quest-for-code</div>
+    <span id="save-indicator">&#x1F4BE; Saved!</span>
+    <div id="tabs">
+      <button class="tab-btn active" onclick="switchTab('world')">World</button>
+      <button class="tab-btn shop-tab" onclick="openShop()">&#x1F6D2; Shop</button>
+      <button class="tab-btn" onclick="switchTab('skills')">Skills</button>
+    </div>
+  </div>
+  <div id="main">
+    <div id="left-panel">
+      <div class="panel-section">
+        <div class="panel-title">Agent Status</div>
+        <div class="stat-row"><span>Level</span><span class="stat-val" id="stat-level">1</span></div>
+        <div class="stat-row"><span>ATK</span><span class="stat-val" id="stat-atk">8</span></div>
+        <div class="stat-row"><span>DEF</span><span class="stat-val" id="stat-def">4</span></div>
+        <div class="stat-row"><span>SPD</span><span class="stat-val" id="stat-spd">5</span></div>
+        <div class="bar-wrap bar-hp"><div class="bar-label"><span>HP</span><span id="stat-hp-text">100/100</span></div><div class="bar"><div class="bar-fill" id="bar-hp" style="width:100%"></div></div></div>
+        <div class="bar-wrap bar-mp"><div class="bar-label"><span>MP</span><span id="stat-mp-text">50/50</span></div><div class="bar"><div class="bar-fill" id="bar-mp" style="width:100%"></div></div></div>
+        <div class="bar-wrap bar-xp"><div class="bar-label"><span>EXP</span><span id="stat-xp-text">0/100</span></div><div class="bar"><div class="bar-fill" id="bar-xp" style="width:0%"></div></div></div>
+        <div class="stat-row"><span>Gold</span><span class="stat-val" id="stat-gold" style="color:var(--gold)">0</span></div>
+        <div class="stat-row"><span>Kills</span><span class="stat-val" id="stat-kills" style="color:var(--muted)">0</span></div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title">Minimap</div>
+        <canvas id="minimap-canvas" width="160" height="120"></canvas>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;" id="loc-label">Forest Path</div>
+      </div>
+      <div class="panel-section" id="skills-panel">
+        <div class="panel-title">Skills</div>
+        <div id="skill-list"></div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title">Save</div>
+        <button id="save-btn-bar" onclick="saveGame()">&#x1F4BE; Save Game</button>
+        <div id="last-save-time">No save</div>
+      </div>
+    </div>
+    <div id="center">
+      <canvas id="world-canvas"></canvas>
+      <div id="flash"></div>
+      <div id="npc-dialogue">
+        <div class="npc-name" id="npc-name-text">???</div>
+        <div class="npc-text" id="npc-text-body"></div>
+        <div class="npc-choices" id="npc-choices"></div>
+      </div>
+      <div id="battle-screen">
+        <div id="battle-arena">
+          <div class="combatant" id="yui-combatant">
+            <span class="combatant-sprite" id="yui-sprite">&#x1F980;</span>
+            <div class="combatant-name">YUI</div>
+            <div class="combatant-bars">
+              <div class="bar-wrap bar-hp"><div class="bar-label"><span>HP</span><span id="b-hp">100/100</span></div><div class="bar" style="height:10px"><div class="bar-fill" id="b-bar-hp" style="width:100%"></div></div></div>
+              <div class="bar-wrap bar-mp"><div class="bar-label"><span>MP</span><span id="b-mp">50/50</span></div><div class="bar" style="height:10px"><div class="bar-fill" id="b-bar-mp" style="width:100%"></div></div></div>
+            </div>
+          </div>
+          <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:var(--muted);align-self:center;">VS</div>
+          <div class="combatant" id="enemy-combatant">
+            <span class="combatant-sprite" id="enemy-sprite">&#x1F47E;</span>
+            <div class="combatant-name" id="enemy-name">BUG.EXE</div>
+            <div class="combatant-bars">
+              <div class="bar-wrap bar-hp"><div class="bar-label"><span>HP</span><span id="b-ehp">--</span></div><div class="bar" style="height:10px"><div class="bar-fill" id="b-bar-ehp" style="width:100%"></div></div></div>
+              <div class="bar-label" style="margin-top:4px;font-size:13px;"><span style="color:var(--muted)">LVL</span><span id="b-elvl" style="color:var(--hp)"> --</span></div>
+            </div>
+          </div>
+        </div>
+        <div id="battle-log">Encounter!</div>
+        <div id="battle-actions">
+          <button class="action-btn" id="btn-attack" onclick="battleAction('attack')">&#x2694; Attack</button>
+          <button class="action-btn skill-act" id="btn-skill" onclick="battleAction('skill')">&#x2728; Skill</button>
+          <button class="action-btn" id="btn-item" onclick="battleAction('item')">&#x1F9EA; Item</button>
+          <button class="action-btn run-act" id="btn-run" onclick="battleAction('run')">&#x1F4A8; Run</button>
+        </div>
+      </div>
+      <div id="shop-screen">
+        <div id="shop-header">
+          <div class="shop-name">&#x1F6D2; CODE EMPORIUM</div>
+          <div id="shop-gold-display">&#x1F4B0; <span id="shop-gold-val">0</span>G</div>
+          <button id="shop-close" onclick="closeShop()">&#x2715; Leave</button>
+        </div>
+        <div id="shop-tabs">
+          <button class="shop-tab-btn active" onclick="setShopTab('buy')">Buy</button>
+          <button class="shop-tab-btn" onclick="setShopTab('sell')">Sell</button>
+          <button class="shop-tab-btn" onclick="setShopTab('services')">Services</button>
+        </div>
+        <div id="shop-content"></div>
+        <div id="shop-npc-msg">Welcome, adventurer! Browse my wares...</div>
+      </div>
+    </div>
+    <div id="right-panel">
+      <div id="right-tabs">
+        <button class="rpanel-tab active" onclick="setRTab('bag')">Bag</button>
+        <button class="rpanel-tab" onclick="setRTab('equip')">Gear</button>
+        <button class="rpanel-tab" onclick="setRTab('log')">Log</button>
+      </div>
+      <div id="right-content"></div>
+    </div>
+  </div>
+  <div id="controls-bar">
+    <div id="location-info">&#x1F4CD; <span id="loc-name">Forest Path</span></div>
+    <div id="help-text">Arrow Keys/WASD to move &bull; Space: interact &bull; NPCs on map</div>
+    <button id="ctrl-save-btn" onclick="saveGame()">&#x1F4BE; Save</button>
+  </div>
+</div>
+<div id="mobile-hud">
+  <div class="mobile-card">
+    <div class="mobile-statline">
+      <span>LV <b id="m-stat-level">1</b></span>
+      <span style="color:var(--gold)">G <b id="m-stat-gold">0</b></span>
+      <span>ATK <b id="m-stat-atk">8</b></span>
+      <span>DEF <b id="m-stat-def">4</b></span>
+      <span style="color:var(--accent2)">&#x1F4CD; <b id="m-loc-name">Home</b></span>
+    </div>
+    <div class="mobile-bars-row" style="display:flex;gap:8px;align-items:center;">
+      <div style="flex:1">
+        <div class="bar-wrap bar-hp"><div class="bar-label"><span>HP</span><span id="m-stat-hp-text">100/100</span></div><div class="bar"><div class="bar-fill" id="m-bar-hp" style="width:100%"></div></div></div>
+        <div class="bar-wrap bar-mp"><div class="bar-label"><span>MP</span><span id="m-stat-mp-text">50/50</span></div><div class="bar"><div class="bar-fill" id="m-bar-mp" style="width:100%"></div></div></div>
+      </div>
+      <div style="flex:1">
+        <div class="bar-wrap bar-xp"><div class="bar-label"><span>EXP</span><span id="m-stat-xp-text">0/100</span></div><div class="bar"><div class="bar-fill" id="m-bar-xp" style="width:0%"></div></div></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">SPD <b id="m-stat-spd" style="color:var(--accent2)">5</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="mobile-drawer" aria-hidden="true">
+  <div id="mobile-drawer-head">
+    <span id="mobile-drawer-title">BAG</span>
+    <button id="mobile-drawer-close" onclick="closeMobilePanel()">x</button>
+  </div>
+  <div id="mobile-content"></div>
+</div>
+<div id="mobile-nav">
+  <button class="mobile-nav-btn" onclick="openMobilePanel('bag')"><span class="nav-icon">&#x1F392;</span>Bag</button>
+  <button class="mobile-nav-btn" onclick="openMobilePanel('equip')"><span class="nav-icon">&#x2694;</span>Gear</button>
+  <button class="mobile-nav-btn shop-nav" onclick="openMobilePanel('shop')"><span class="nav-icon">&#x1F6D2;</span>Shop</button>
+  <button class="mobile-nav-btn" onclick="openMobilePanel('skills')"><span class="nav-icon">&#x2728;</span>Skills</button>
+  <button class="mobile-nav-btn save-nav" onclick="saveGame();flashSaveIndicator();"><span class="nav-icon">&#x1F4BE;</span>Save</button>
+</div>
+<div id="joystick-wrap">
+  <div id="dpad">
+    <div></div>
+    <div class="dpad-btn" data-dir="up">&#x25B2;</div>
+    <div></div>
+    <div class="dpad-btn" data-dir="left">&#x25C4;</div>
+    <div class="dpad-center"></div>
+    <div class="dpad-btn" data-dir="right">&#x25BA;</div>
+    <div></div>
+    <div class="dpad-btn" data-dir="down">&#x25BC;</div>
+    <div></div>
+  </div>
+</div>
+<button id="interact-btn-mobile" type="button">
+  <span style="font-size:22px">&#x1F4AC;</span>
+  <span>Talk</span>
+</button>
+<div id="popup-overlay">
+  <div id="popup-box">
+    <div id="popup-title">NOTICE</div>
+    <div id="popup-body"></div>
+    <div id="popup-btns"></div>
+  </div>
+</div>
+<div id="achievement-toast">
+  <div class="ach-title">ACHIEVEMENT</div>
+  <div id="achievement-text"></div>
+</div>
+<script>
+const SAVE_KEY='yui_rpg_save_v2';
+const SKILL_DEFS=[
+  {id:'bite',name:'Claw Bite',mpCost:10,unlockLv:1,icon:'\u{1F980}',desc:'Quick claw strike',dmgMult:1.4},
+  {id:'memstrike',name:'Mem Strike',mpCost:15,unlockLv:3,icon:'\u{1F4BE}',desc:'Data overload burst',dmgMult:1.8},
+  {id:'guardrail',name:'Guard Rail',mpCost:12,unlockLv:5,icon:'\u{1F6E1}',desc:'Raise DEF 2 turns',effect:'defend'},
+  {id:'codeblast',name:'Code Blast',mpCost:25,unlockLv:8,icon:'\u{1F4A5}',desc:'Full debug explosion',dmgMult:2.5},
+  {id:'heuristic',name:'Heuristic',mpCost:20,unlockLv:10,icon:'\u{1F52E}',desc:'Random high damage',dmgMult:3.0,random:true},
+  {id:'overflow',name:'Stack Overflow',mpCost:30,unlockLv:12,icon:'\u{1F4DA}',desc:'3-hit combo',dmgMult:1.2,multi:3},
+];
+const ENEMY_TYPES=[
+  {name:'BUG.EXE',icon:'\u{1F47E}',hpMult:0.8,atkMult:0.7,xpMult:1.0,goldMult:1},
+  {name:'NULL PTR',icon:'\u274C',hpMult:1.0,atkMult:1.0,xpMult:1.2,goldMult:1.5},
+  {name:'DEADLOCK',icon:'\u{1F512}',hpMult:1.5,atkMult:0.8,xpMult:1.3,goldMult:2},
+  {name:'STACK OVR',icon:'\u{1F4DA}',hpMult:0.9,atkMult:1.3,xpMult:1.4,goldMult:1.5},
+  {name:'SEGFAULT',icon:'\u{1F4A2}',hpMult:1.2,atkMult:1.2,xpMult:1.5,goldMult:2},
+  {name:'HEAPSPRAY',icon:'\u{1F9E8}',hpMult:2.0,atkMult:1.5,xpMult:2.5,goldMult:3},
+  {name:'RACE COND',icon:'\u{1F3CE}',hpMult:0.7,atkMult:1.8,xpMult:1.6,goldMult:2},
+  {name:'MEMLEAKR',icon:'\u{1F573}',hpMult:2.5,atkMult:0.9,xpMult:2.0,goldMult:2.5},
+];
+const WEAPON_NAMES=['Rusty Fork','Iron Claw','Code Blade','Git Sword','Merge Axe','Commit Lance','Debug Scythe','Pointer Pike'];
+const ARMOR_NAMES=['Leather Tab','Iron Shell','Crab Mail','Firewall Vest','Cache Plate','SSL Chainmail'];
+const GLOVE_NAMES=['Wool Gloves','Iron Grip','Swift Claws','Refactor Hands','API Gauntlets'];
+const BOOT_NAMES=['Worn Boots','Agile Shoes','Rollback Boots','Deploy Sprints','K8s Treads'];
+const RARITY=['Common','Uncommon','Rare','Epic'];
+const RARITY_COLOR=['#d4d0e8','#7ec8e3','#b8e986','#e8936a'];
+const TILE={WALL:0,FLOOR:1,TREE:2,WATER:3,HOME:4,BRIDGE:5,SHOP:6,NPC:7};
+const TILE_COLOR={0:'#14142a',1:'#1c2c1c',2:'#0c1c0c',3:'#0c182c',4:'#2c2818',5:'#382818',6:'#200828',7:'#182820'};
+
+const NPC_DEFS=[
+  {id:'sage',name:'ELDER SAGE',icon:'\u{1F9D9}',sprite:'\u{1F9D9}',x:5,y:7,dialogues:[
+    {text:"Greetings, Yui! The digital wilds are dangerous. Gear up at the 🛒 Code Emporium!",choices:[{label:'Thanks!',fn:'close'}]},
+    {text:"The Dark Depths (southeast) hold harder enemies but better loot. Be prepared!",choices:[{label:'Noted',fn:'close'}]},
+    {text:"Save often! Press the Save button or visit me — I'll remind you.",choices:[{label:'Wise words',fn:'close'},{label:'Save now',fn:'saveNow'}]},
+  ],dialogueIdx:0},
+  {id:'merchant',name:'WANDERING MERCHANT',icon:'\u{1F91D}',sprite:'\u{1F91D}',x:22,y:10,dialogues:[
+    {text:"Psst! The Shop sells Power Shards to boost your ATK permanently. Worth it!",choices:[{label:'Interesting',fn:'close'},{label:'Open Shop',fn:'shopOpen'}]},
+    {text:"Sell your spare gear for Gold, then reinvest in consumables. Smart play!",choices:[{label:'Good tip',fn:'close'}]},
+    {text:"The Full Elixir is pricey but saves lives in the Crystal Caves. Trust me.",choices:[{label:'Got it',fn:'close'}]},
+  ],dialogueIdx:0},
+  {id:'warrior',name:'VETERAN CODER',icon:'\u2694',sprite:'\u2694',x:12,y:18,dialogues:[
+    {text:"Stack your DEF gear before entering Dark Depths. HEAPSPRAY hits like a truck!",choices:[{label:'Roger that',fn:'close'}]},
+    {text:"Skills unlock as you level up. Stack Overflow at Lv12 is brutal against bosses.",choices:[{label:'Can\'t wait',fn:'close'}]},
+    {text:"Tip: Use Guard Rail before the enemy attacks. Timing is everything!",choices:[{label:'Got it',fn:'close'}]},
+  ],dialogueIdx:0},
+];
+
+const SHOP_ITEMS=[
+  {id:'hp_pot',name:'Health Potion',icon:'\u{1F9EA}',stat:'Restores 40+lv*8 HP',price:30,effect:'heal_big'},
+  {id:'mp_pot',name:'Mana Crystal',icon:'\u{1F48E}',stat:'Restores 30 MP',price:25,effect:'heal_mp'},
+  {id:'elixir',name:'Full Elixir',icon:'\u2697',stat:'Full HP+MP restore',price:120,effect:'elixir'},
+  {id:'shield_tonic',name:'Shield Tonic',icon:'\u{1F6E1}',stat:'+20 DEF next battle',price:40,effect:'shield_tonic'},
+  {id:'speed_brew',name:'Speed Brew',icon:'\u26A1',stat:'+5 SPD permanently',price:80,effect:'spd_up'},
+  {id:'atk_shard',name:'Power Shard',icon:'\u{1F53A}',stat:'+3 ATK permanently',price:90,effect:'atk_up'},
+];
+const SHOP_SERVICES=[
+  {id:'full_heal',name:'Full Restore',icon:'\u{1F489}',stat:'Fully restore HP & MP',price:60},
+  {id:'revive',name:'Emergency Revive',icon:'\u2728',stat:'Survive defeat once',price:100},
+  {id:'clear_save',name:'Reset Save',icon:'\u{1F5D1}',stat:'Delete all save data',price:0,danger:true},
+];
+
+let G={
+  yui:{x:4,y:4,hp:100,maxHp:100,mp:50,maxMp:50,atk:8,def:4,spd:5,level:1,xp:0,xpNext:100,gold:50,kills:0,selectedSkill:0,hasRevive:false},
+  bag:[{id:1,type:'potion',name:'Health Potion',icon:'\u{1F9EA}',qty:3,stats:{hp:30}},{id:2,type:'weapon',name:'Common Rusty Fork',icon:'\u2694',qty:1,stats:{atk:2},rarity:0}],
+  equipment:{weapon:null,armor:null,gloves:null,boots:null},
+  mode:'world',currentEnemy:null,battleTurn:'player',battleLocked:false,
+  moveDir:null,lastDpadStepAt:0,stepCount:0,encounterChance:0, encounterCooldownUntil:0, safeSteps:8,
+  log:[{msg:'Yui awakens. Quest for Code begins!',type:'system'},{msg:'Move with arrow keys or D-pad.',type:'system'},{msg:'Press Space or Talk button to interact with NPCs.',type:'system'},{msg:'Visit the Shop (S key or Shop tab).',type:'system'},{msg:'You start with 50 Gold!',type:'system'}],
+  rightTab:'bag',worldTab:'world',map:null,mapW:40,mapH:30,tileSize:20,camera:{x:0,y:0},
+  zones:[],currentZone:'Forest Path',mobileTab:'bag',shopTab:'buy',
+  achievements:[],npcStates:{},lastSaveTime:null,
+};
+
+// SAVE/LOAD
+function saveGame(){
+  try{
+    const d={yui:G.yui,bag:G.bag,equipment:G.equipment,log:G.log.slice(-80),rightTab:G.rightTab,currentZone:G.currentZone,achievements:G.achievements,npcStates:G.npcStates,timestamp:Date.now()};
+    localStorage.setItem(SAVE_KEY,JSON.stringify(d));
+    G.lastSaveTime=Date.now();
+    addLog('Game saved! \u{1F4BE}','save');
+    updateLastSaveTime();
+    flashSaveIndicator();
+  }catch(e){addLog('Save failed!','system');}
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d.yui)return false;
+    G.yui={...G.yui,...d.yui};
+    G.bag=d.bag||[];
+    G.equipment=d.equipment||{weapon:null,armor:null,gloves:null,boots:null};
+    G.log=d.log||[];
+    G.rightTab=d.rightTab||'bag';
+    G.currentZone=d.currentZone||'Forest Path';
+    G.achievements=d.achievements||[];
+    G.npcStates=d.npcStates||{};
+    G.lastSaveTime=d.timestamp||null;
+    NPC_DEFS.forEach(n=>{if(G.npcStates[n.id]!==undefined)n.dialogueIdx=G.npcStates[n.id];});
+    return true;
+  }catch(e){return false;}
+}
+function flashSaveIndicator(){
+  const el=document.getElementById('save-indicator');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2000);
+}
+function updateLastSaveTime(){
+  const el=document.getElementById('last-save-time');
+  if(!el)return;
+  if(!G.lastSaveTime){el.textContent='No save';return;}
+  const d=Math.floor((Date.now()-G.lastSaveTime)/1000);
+  el.textContent=d<60?'Saved just now':Math.floor(d/60)+'m ago';
+}
+setInterval(()=>{if(G.mode==='world')saveGame();},120000);
+setInterval(updateLastSaveTime,30000);
+
+// MAP
+function generateMap(){
+  const w=G.mapW,h=G.mapH,m=[];
+  for(let y=0;y<h;y++){m.push([]);for(let x=0;x<w;x++){const r=Math.random();if(x===0||y===0||x===w-1||y===h-1)m[y].push(TILE.WALL);else if(r<0.12)m[y].push(TILE.TREE);else if(r<0.18)m[y].push(TILE.WATER);else m[y].push(TILE.FLOOR);}}
+  for(let y=2;y<=6;y++)for(let x=2;x<=9;x++)m[y][x]=TILE.HOME;
+  m[3][8]=TILE.SHOP;
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){if(m[y][x]===TILE.WATER&&m[y][x-1]===TILE.FLOOR&&m[y][x+1]===TILE.FLOOR)m[y][x]=TILE.BRIDGE;}
+  for(let x=1;x<w-1;x++){if(m[10][x]===TILE.TREE||m[10][x]===TILE.WATER)m[10][x]=TILE.FLOOR;}
+  for(let y=1;y<h-1;y++){if(m[y][20]===TILE.TREE||m[y][20]===TILE.WATER)m[y][20]=TILE.FLOOR;}
+  NPC_DEFS.forEach(n=>{m[n.y][n.x]=TILE.NPC;});
+  G.map=m;
+  G.zones=[
+    {name:'Home Base',x:2,y:2,w:8,h:5,heal:true,encounter:false},
+    {name:'Forest Path',x:10,y:5,w:14,h:10,encounter:true},
+    {name:'Dark Depths',x:24,y:15,w:15,h:14,encounter:true,harder:true},
+    {name:'Crystal Caves',x:9,y:15,w:14,h:14,encounter:true,boss:true},
+  ];
+}
+
+// CANVAS
+let worldCanvas,ctx,mmCanvas,mmCtx;
+function initCanvas(){
+  worldCanvas=document.getElementById('world-canvas');
+  ctx=worldCanvas.getContext('2d');
+  mmCanvas=document.getElementById('minimap-canvas');
+  mmCtx=mmCanvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
+}
+function resizeCanvas(){
+  const r=document.getElementById('center').getBoundingClientRect();
+  worldCanvas.width=r.width;worldCanvas.height=r.height;
+  render();
+}
+function render(){
+  if(G.mode==='battle'||G.mode==='shop'){renderMinimap();return;}
+  const W=worldCanvas.width,H=worldCanvas.height,ts=G.tileSize;
+  G.camera.x=Math.round(G.yui.x*ts-W/2);
+  G.camera.y=Math.round(G.yui.y*ts-H/2);
+  ctx.fillStyle='#050510';ctx.fillRect(0,0,W,H);
+  const sX=Math.max(0,Math.floor(G.camera.x/ts));
+  const sY=Math.max(0,Math.floor(G.camera.y/ts));
+  const eX=Math.min(G.mapW,Math.ceil((G.camera.x+W)/ts));
+  const eY=Math.min(G.mapH,Math.ceil((G.camera.y+H)/ts));
+  for(let y=sY;y<eY;y++){for(let x=sX;x<eX;x++){
+    const tile=G.map[y][x];
+    const px=x*ts-G.camera.x,py=y*ts-G.camera.y;
+    ctx.fillStyle=TILE_COLOR[tile]||'#1a1a2a';ctx.fillRect(px,py,ts,ts);
+    if(tile===TILE.TREE){ctx.fillStyle='#1a3a1a';ctx.fillRect(px+2,py+2,ts-4,ts-4);ctx.font=(ts-2)+'px serif';ctx.textAlign='center';ctx.fillText('\u{1F332}',px+ts/2,py+ts-1);}
+    else if(tile===TILE.WATER){ctx.fillStyle='#142234';ctx.fillRect(px+1,py+ts/2,ts-2,ts/2-1);ctx.fillStyle='rgba(126,200,227,0.08)';ctx.fillRect(px+2,py+ts/2+2,ts-4,3);}
+    else if(tile===TILE.HOME){ctx.fillStyle='#3a2e18';ctx.fillRect(px+1,py+1,ts-2,ts-2);}
+    else if(tile===TILE.BRIDGE){ctx.fillStyle='#503820';ctx.fillRect(px+3,py,ts-6,ts);}
+    else if(tile===TILE.SHOP){ctx.fillStyle='#280c3a';ctx.fillRect(px,py,ts,ts);ctx.font=(ts-4)+'px serif';ctx.textAlign='center';ctx.fillText('\u{1F6D2}',px+ts/2,py+ts-2);}
+    else if(tile===TILE.NPC){const npc=NPC_DEFS.find(n=>n.x===x&&n.y===y);ctx.font=(ts-2)+'px serif';ctx.textAlign='center';ctx.fillText(npc?npc.sprite:'?',px+ts/2,py+ts-1);}
+    ctx.strokeStyle='rgba(255,255,255,0.02)';ctx.strokeRect(px,py,ts,ts);
+  }}
+  ctx.font='11px VT323';ctx.textAlign='left';
+  for(const z of G.zones){ctx.fillStyle='rgba(255,255,255,0.18)';ctx.fillText(z.name,z.x*ts-G.camera.x+2,z.y*ts-G.camera.y+12);}
+  const px=G.yui.x*ts-G.camera.x,py=G.yui.y*ts-G.camera.y;
+  ctx.font=(ts-2)+'px serif';ctx.textAlign='center';ctx.fillText('\u{1F980}',px+ts/2,py+ts-2);
+  const hint=getNearbyHint();
+  if(hint){ctx.fillStyle='rgba(104,232,184,0.9)';ctx.font='bold 12px VT323';ctx.textAlign='center';ctx.fillText('[Space] '+hint,px+ts/2,py-5);}
+  renderMinimap();
+}
+function renderMinimap(){
+  const mw=160,mh=120,tw=mw/G.mapW,th=mh/G.mapH;
+  mmCtx.fillStyle='#050510';mmCtx.fillRect(0,0,mw,mh);
+  for(let y=0;y<G.mapH;y++)for(let x=0;x<G.mapW;x++){
+    const c={0:'#0c0c1a',1:'#203020',2:'#182818',3:'#18243a',4:'#302818',5:'#403018',6:'#280c3a',7:'#183028'}[G.map[y][x]]||'#151525';
+    mmCtx.fillStyle=c;mmCtx.fillRect(x*tw,y*th,tw,th);
+  }
+  mmCtx.fillStyle='#68e8b8';NPC_DEFS.forEach(n=>mmCtx.fillRect(n.x*tw,n.y*th,tw+1,th+1));
+  mmCtx.fillStyle='#e8936a';mmCtx.beginPath();mmCtx.arc(G.yui.x*tw+tw/2,G.yui.y*th+th/2,2,0,Math.PI*2);mmCtx.fill();
+}
+
+// MOVEMENT
+const keysDown={};
+window.addEventListener('keydown',e=>{
+  keysDown[e.key]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d',' '].includes(e.key))e.preventDefault();
+  if(e.key===' ')interact();
+});
+window.addEventListener('keyup',e=>{delete keysDown[e.key];});
+let lastMove=0;
+function gameLoop(ts){
+  if(G.mode==='world'){
+    const now=performance.now();
+    if(now-lastMove>170){
+      let dx=0,dy=0;
+      if(keysDown['ArrowUp']||keysDown['w'])dy=-1;
+      if(keysDown['ArrowDown']||keysDown['s'])dy=1;
+      if(keysDown['ArrowLeft']||keysDown['a'])dx=-1;
+      if(keysDown['ArrowRight']||keysDown['d'])dx=1;
+      if(G.moveDir==='up')dy=-1;if(G.moveDir==='down')dy=1;
+      if(G.moveDir==='left')dx=-1;if(G.moveDir==='right')dx=1;
+      if(dx||dy){movePlayer(dx,dy);lastMove=now;}
+    }
+    render();
+  }
+  requestAnimationFrame(gameLoop);
+}
+function movePlayer(dx,dy){
+  const nx=G.yui.x+dx,ny=G.yui.y+dy;
+  if(nx<0||ny<0||nx>=G.mapW||ny>=G.mapH)return;
+  const tile=G.map[ny][nx];
+  if(tile===TILE.WALL||tile===TILE.TREE||tile===TILE.WATER)return;
+  if(tile===TILE.NPC){interact();return;}
+  G.yui.x=nx;G.yui.y=ny;
+  G.stepCount=(G.stepCount||0)+1;
+  updateZone();checkHeal();checkEncounter();updateUI();
+  closeNPCDialogue();
+}
+function dpadPress(d){
+  if(G.mode!=='world')return;
+  const dirDelta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+  const delta=dirDelta[d];
+  if(!delta)return;
+  const now=performance.now();
+  // One clean tile per press. This guards against touch + mouse + pointer
+  // all firing from the same DevTools tap.
+  if(now-(G.lastDpadStepAt||0)<150)return;
+  G.lastDpadStepAt=now;
+  G.moveDir=null;
+  closeNPCDialogue();
+  movePlayer(delta[0],delta[1]);
+  lastMove=now;
+  pauseEncounters(180);
+}
+function dpadRelease(){G.moveDir=null;}
+function pauseEncounters(ms=650){
+  G.encounterCooldownUntil=Math.max(G.encounterCooldownUntil||0,performance.now()+ms);
+}
+function resetMovement(){
+  G.moveDir=null;
+  ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].forEach(k=>delete keysDown[k]);
+}
+
+// ZONES
+function updateZone(){
+  for(const z of G.zones){
+    if(G.yui.x>=z.x&&G.yui.x<z.x+z.w&&G.yui.y>=z.y&&G.yui.y<z.y+z.h){
+      if(G.currentZone!==z.name){G.currentZone=z.name;G.safeSteps=8;pauseEncounters(1200);addLog('Entered '+z.name,'system');checkZoneAch(z.name);}
+      return;
+    }
+  }
+}
+function checkZoneAch(zone){const k='zone_'+zone.replace(' ','_');if(!G.achievements.includes(k)){G.achievements.push(k);showAchievement('Explorer','Entered '+zone+'!');}}
+function checkHeal(){
+  const z=G.zones.find(z=>z.heal&&G.yui.x>=z.x&&G.yui.x<z.x+z.w&&G.yui.y>=z.y&&G.yui.y<z.y+z.h);
+  if(z){const ph=G.yui.hp,pm=G.yui.mp;G.yui.hp=Math.min(G.yui.maxHp,G.yui.hp+3);G.yui.mp=Math.min(G.yui.maxMp,G.yui.mp+2);if(G.yui.hp!==ph||G.yui.mp!==pm)addLog('Home heal: +'+(G.yui.hp-ph)+'HP +'+(G.yui.mp-pm)+'MP','heal');}
+}
+function checkEncounter(){
+  const z=G.zones.find(z=>z.encounter&&G.yui.x>=z.x&&G.yui.x<z.x+z.w&&G.yui.y>=z.y&&G.yui.y<z.y+z.h);
+  if(!z)return;
+  if(performance.now()<(G.encounterCooldownUntil||0))return;
+  if((G.safeSteps||0)>0){G.safeSteps--;return;}
+  const isMobile=window.matchMedia('(max-width:760px)').matches || navigator.maxTouchPoints>0;
+  const chance=(z.harder?0.16:0.09) * (isMobile?0.75:1);
+  if(Math.random()<chance){
+    G.safeSteps=4;
+    startBattle(z.harder,z.boss);
+  }
+}
+
+// INTERACT
+function getNearbyHint(){
+  const {x,y}=G.yui;
+  if(G.map[y][x]===TILE.SHOP)return 'Open Shop';
+  if(G.map[y][x]===TILE.HOME)return 'Rest';
+  for(const [dx,dy] of [[0,0],[0,-1],[0,1],[-1,0],[1,0]]){
+    const nx=x+dx,ny=y+dy;
+    if(nx>=0&&ny>=0&&nx<G.mapW&&ny<G.mapH&&G.map[ny][nx]===TILE.NPC){const npc=NPC_DEFS.find(n=>n.x===nx&&n.y===ny);return npc?'Talk: '+npc.name:null;}
+  }
+  return null;
+}
+function interact(){
+  if(G.mode!=='world')return;
+  const {x,y}=G.yui;
+  if(G.map[y][x]===TILE.SHOP){openShop();return;}
+  if(G.map[y][x]===TILE.HOME){
+    G.yui.hp=G.yui.maxHp;G.yui.mp=G.yui.maxMp;
+    addLog('Rested fully at Home Base!','heal');updateUI();
+    showPopup('HOME BASE','Yui rested.<br><span style="color:var(--hp)">HP & MP fully restored!</span>',[{label:'Great!',fn:closePopup},{label:'Save \u{1F4BE}',fn:()=>{closePopup();saveGame();}}]);
+    return;
+  }
+  for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0],[0,0]]){
+    const nx=x+dx,ny=y+dy;
+    if(nx>=0&&ny>=0&&nx<G.mapW&&ny<G.mapH&&G.map[ny][nx]===TILE.NPC){
+      const npc=NPC_DEFS.find(n=>n.x===nx&&n.y===ny);if(npc){startNPCDialogue(npc);return;}
+    }
+  }
+}
+
+// NPC DIALOGUE
+function startNPCDialogue(npc){
+  const d=npc.dialogues[npc.dialogueIdx%npc.dialogues.length];
+  document.getElementById('npc-name-text').textContent=npc.icon+' '+npc.name;
+  document.getElementById('npc-text-body').textContent=d.text;
+  const el=document.getElementById('npc-choices');el.innerHTML='';
+  d.choices.forEach(c=>{
+    const btn=document.createElement('button');btn.className='npc-choice-btn';btn.textContent=c.label;
+    btn.onclick=()=>{
+      if(c.fn==='close')closeNPCDialogue();
+      else if(c.fn==='shopOpen'){closeNPCDialogue();openShop();}
+      else if(c.fn==='saveNow'){closeNPCDialogue();saveGame();}
+      npc.dialogueIdx++;G.npcStates[npc.id]=npc.dialogueIdx;
+    };
+    el.appendChild(btn);
+  });
+  document.getElementById('npc-dialogue').classList.add('active');
+  addLog('['+npc.name+']: '+d.text.slice(0,50)+'...','npc');
+}
+function closeNPCDialogue(){document.getElementById('npc-dialogue').classList.remove('active');}
+
+// SHOP
+let shopTabCurrent='buy';
+function openShop(){
+  if(G.mode==='battle')return;
+  resetMovement();pauseEncounters(1200);
+  G.mode='shop';
+  document.getElementById('shop-screen').classList.add('active');
+  document.getElementById('battle-screen').classList.remove('active');
+  setShopTab('buy');updateShopGold();
+  addLog('Entered Code Emporium.','shop');
+  setShopMsg('Welcome! What can I do for you today?');
+}
+function closeShop(){
+  resetMovement();pauseEncounters(1200);
+  G.mode='world';
+  document.getElementById('shop-screen').classList.remove('active');
+  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
+  updateUI();addLog('Left the shop.','shop');
+}
+function setShopTab(tab){
+  shopTabCurrent=tab;
+  document.querySelectorAll('.shop-tab-btn').forEach((b,i)=>b.classList.toggle('active',['buy','sell','services'][i]===tab));
+  renderShopContent();
+}
+function updateShopGold(){document.getElementById('shop-gold-val').textContent=G.yui.gold;}
+function setShopMsg(m){document.getElementById('shop-npc-msg').textContent=m;}
+function renderShopContent(){
+  const el=document.getElementById('shop-content');el.innerHTML='';
+  if(shopTabCurrent==='buy'){
+    SHOP_ITEMS.forEach(item=>{
+      const ok=G.yui.gold>=item.price;
+      const div=document.createElement('div');div.className='shop-item';
+      div.innerHTML=`<span class="shop-item-icon">${item.icon}</span><div class="shop-item-info"><div class="shop-item-name">${item.name}</div><div class="shop-item-stat">${item.stat}</div></div><span class="shop-item-price${ok?'':' cant-afford'}">\u{1F4B0}${item.price}G</span>`;
+      div.onclick=()=>buyItem(item);el.appendChild(div);
+    });
+  } else if(shopTabCurrent==='sell'){
+    if(!G.bag.length){el.innerHTML='<div style="color:var(--muted);padding:14px;font-size:17px;">Your bag is empty.</div>';return;}
+    G.bag.forEach(item=>{
+      const sp=Math.max(5,Math.round((item.stats.atk||item.stats.def||item.stats.spd||item.stats.hp||10)*(item.rarity!=null?item.rarity+1:1)*3));
+      const rc=item.rarity!=null?RARITY_COLOR[item.rarity]:'#d4d0e8';
+      const ss=Object.entries(item.stats).map(([k,v])=>'+'+v+k.replace('2','')).join(' ');
+      const div=document.createElement('div');div.className='shop-item';
+      div.innerHTML=`<span class="shop-item-icon">${item.icon}</span><div class="shop-item-info"><div class="shop-item-name" style="color:${rc}">${item.name}</div><div class="shop-item-stat">${ss}${item.qty>1?' x'+item.qty:''}</div></div><span class="shop-item-price">\u{1F4B0}${sp}G</span>`;
+      div.onclick=()=>sellItem(item,sp);el.appendChild(div);
+    });
+  } else {
+    SHOP_SERVICES.forEach(svc=>{
+      const div=document.createElement('div');div.className='shop-item';
+      const ca=svc.price>0&&G.yui.gold<svc.price;
+      div.innerHTML=`<span class="shop-item-icon">${svc.icon}</span><div class="shop-item-info"><div class="shop-item-name"${svc.danger?' style="color:var(--hp)"':''}>${svc.name}</div><div class="shop-item-stat">${svc.stat}</div></div><span class="shop-item-price${ca?' cant-afford':''}">${svc.price>0?'\u{1F4B0}'+svc.price+'G':'FREE'}</span>`;
+      div.onclick=()=>buyService(svc);el.appendChild(div);
+    });
+  }
+}
+function buyItem(item){
+  if(G.yui.gold<item.price){setShopMsg("Can't afford that!");return;}
+  G.yui.gold-=item.price;updateShopGold();
+  if(item.effect==='heal_big'){
+    const h=Math.round(40+G.yui.level*8);
+    const ex=G.bag.find(i=>i.type==='potion');
+    if(ex)ex.qty++;else G.bag.push({id:Date.now(),type:'potion',name:'Health Potion',icon:'\u{1F9EA}',qty:1,stats:{hp:h}});
+    setShopMsg('Bought '+item.name+'! Heals '+h+'HP.');
+  } else if(item.effect==='heal_mp'){
+    G.bag.push({id:Date.now(),type:'mp_potion',name:'Mana Crystal',icon:'\u{1F48E}',qty:1,stats:{mp:30}});
+    setShopMsg('Bought '+item.name+'! Restores 30MP.');
+  } else if(item.effect==='elixir'){
+    G.bag.push({id:Date.now(),type:'elixir',name:'Full Elixir',icon:'\u2697',qty:1,stats:{hp:999,mp:999}});
+    setShopMsg('Full Elixir purchased! Use in battle.');
+  } else if(item.effect==='shield_tonic'){
+    G.bag.push({id:Date.now(),type:'shield_tonic',name:'Shield Tonic',icon:'\u{1F6E1}',qty:1,stats:{def:20}});
+    setShopMsg('Shield Tonic purchased! Use in battle.');
+  } else if(item.effect==='spd_up'){G.yui.spd+=5;setShopMsg('SPD permanently +5!');}
+  else if(item.effect==='atk_up'){G.yui.atk+=3;setShopMsg('ATK permanently +3!');}
+  addLog('Bought '+item.name+' for '+item.price+'G','shop');
+  checkAch('shopper','First Purchase','Bought your first item!');
+  updateUI();
+}
+function sellItem(item,price){
+  showPopup('SELL ITEM','Sell <span style="color:var(--gold)">'+item.name+'</span> for <span style="color:var(--gold)">'+price+'G</span>?',[
+    {label:'Sell',fn:()=>{
+      G.yui.gold+=price;
+      if(item.qty>1)item.qty--;else G.bag=G.bag.filter(i=>i!==item);
+      addLog('Sold '+item.name+' for '+price+'G','shop');
+      setShopMsg('Sold for '+price+'G!');
+      updateShopGold();updateUI();closePopup();renderShopContent();
+    },confirm:true},
+    {label:'Cancel',fn:closePopup}
+  ]);
+}
+function buyService(svc){
+  if(svc.id==='full_heal'){
+    if(G.yui.gold<svc.price){setShopMsg('Not enough gold!');return;}
+    G.yui.gold-=svc.price;G.yui.hp=G.yui.maxHp;G.yui.mp=G.yui.maxMp;
+    setShopMsg('Fully restored! Looking fresh!');addLog('Full Restore for '+svc.price+'G','shop');
+    updateShopGold();updateUI();
+  } else if(svc.id==='revive'){
+    if(G.yui.gold<svc.price){setShopMsg('Not enough gold!');return;}
+    G.yui.gold-=svc.price;G.yui.hasRevive=true;
+    setShopMsg('Emergency Revive ready! Survive defeat once.');addLog('Emergency Revive for '+svc.price+'G','shop');
+    updateShopGold();updateUI();
+  } else if(svc.id==='clear_save'){
+    showPopup('RESET SAVE','<span style="color:var(--hp)">\u26A0 This will DELETE all save data!</span><br>Are you sure?',[
+      {label:'DELETE ALL',fn:()=>{localStorage.removeItem(SAVE_KEY);closePopup();closeShop();addLog('Save cleared.','system');setTimeout(()=>location.reload(),600);},danger:true},
+      {label:'Cancel',fn:closePopup}
+    ]);
+  }
+}
+
+// BATTLE
+function startBattle(harder=false,boss=false){
+  if(G.mode!=='world')return;
+  resetMovement();
+  closeNPCDialogue();
+  const lv=G.yui.level;
+  const sl=harder?Math.max(1,lv+Math.floor(Math.random()*3)):Math.max(1,lv-1+Math.floor(Math.random()*3));
+  const pool=boss?ENEMY_TYPES.slice(3):harder?ENEMY_TYPES.slice(2):ENEMY_TYPES;
+  const tmpl=pool[Math.floor(Math.random()*pool.length)];
+  const enemy={name:tmpl.name,icon:tmpl.icon,level:sl,maxHp:Math.round(20*sl*tmpl.hpMult),atk:Math.round((4+sl*1.5)*tmpl.atkMult),xpReward:Math.round(20*sl*tmpl.xpMult),goldReward:Math.round(5*sl*tmpl.goldMult)};
+  enemy.hp=enemy.maxHp;G.currentEnemy=enemy;G.mode='battle';G.battleLocked=false;G.battleTurn='player';
+  document.getElementById('battle-screen').classList.add('active');
+  document.getElementById('shop-screen').classList.remove('active');
+  document.getElementById('enemy-sprite').textContent=enemy.icon;
+  document.getElementById('enemy-name').textContent=enemy.name;
+  document.getElementById('b-elvl').textContent=' LV'+enemy.level;
+  updateBattleUI();setBattleLog('\u26A1 A wild <b>'+enemy.name+'</b> (Lv'+enemy.level+') appeared!');
+  addLog('Encounter: '+enemy.name+' Lv'+enemy.level,'combat');setActionButtons(true);
+}
+function setBattleLog(m){document.getElementById('battle-log').innerHTML=m;}
+function updateBattleUI(){
+  const y=G.yui,e=G.currentEnemy;
+  document.getElementById('b-hp').textContent=y.hp+'/'+y.maxHp;
+  document.getElementById('b-bar-hp').style.width=(y.hp/y.maxHp*100)+'%';
+  document.getElementById('b-mp').textContent=y.mp+'/'+y.maxMp;
+  document.getElementById('b-bar-mp').style.width=(y.mp/y.maxMp*100)+'%';
+  if(e){document.getElementById('b-ehp').textContent=e.hp+'/'+e.maxHp;document.getElementById('b-bar-ehp').style.width=(e.hp/e.maxHp*100)+'%';}
+  updateUI();
+}
+function setActionButtons(en){['btn-attack','btn-skill','btn-item','btn-run'].forEach(id=>{document.getElementById(id).disabled=!en;});}
+function animateSprite(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');setTimeout(()=>el.classList.remove('shake'),400);}
+function calcDmg(atk,def){return Math.round(Math.max(1,atk-def)*(0.82+Math.random()*0.36));}
+
+let battleDefBuff=0,battleShield=0;
+function battleAction(action){
+  if(G.battleLocked||G.battleTurn!=='player')return;
+  G.battleLocked=true;setActionButtons(false);
+  let msg='';const y=G.yui,e=G.currentEnemy;
+  const totAtk=y.atk+getTotalEquipStat('atk');
+  if(action==='attack'){
+    const dmg=calcDmg(totAtk,0);e.hp=Math.max(0,e.hp-dmg);
+    msg='\u2694 Yui strikes for <span style="color:var(--hp)">'+dmg+' DMG</span>!';
+    addLog('Yui \u2192 '+e.name+': '+dmg+' dmg','combat');animateSprite('enemy-sprite');
+  } else if(action==='skill'){
+    const sk=SKILL_DEFS[y.selectedSkill];
+    if(!sk||y.mp<sk.mpCost){setBattleLog('Not enough MP!');G.battleLocked=false;setActionButtons(true);return;}
+    if(y.level<sk.unlockLv){setBattleLog('Skill not unlocked!');G.battleLocked=false;setActionButtons(true);return;}
+    y.mp=Math.max(0,y.mp-sk.mpCost);
+    if(sk.effect==='defend'){battleDefBuff=2;msg=sk.icon+' <b>'+sk.name+'</b>: DEF raised 2 turns!';}
+    else if(sk.multi){let td=0;for(let i=0;i<sk.multi;i++)td+=calcDmg(totAtk,0);const dmg=Math.round(td*sk.dmgMult);e.hp=Math.max(0,e.hp-dmg);msg=sk.icon+' <b>'+sk.name+'</b>: '+sk.multi+'-hit! <span style="color:var(--accent2)">'+dmg+' DMG</span>!';addLog('Yui ['+sk.name+'] \u2192 '+e.name+': '+dmg+' dmg','combat');}
+    else{const mult=sk.random?(sk.dmgMult*(0.5+Math.random())):sk.dmgMult;const dmg=Math.round(calcDmg(totAtk,0)*mult);e.hp=Math.max(0,e.hp-dmg);msg=sk.icon+' <b>'+sk.name+'</b>: <span style="color:var(--accent2)">'+dmg+' DMG</span>!';addLog('Yui ['+sk.name+'] \u2192 '+e.name+': '+dmg+' dmg','combat');}
+    animateSprite('enemy-sprite');
+  } else if(action==='item'){
+    const eli=G.bag.find(i=>i.type==='elixir');
+    const ton=G.bag.find(i=>i.type==='shield_tonic');
+    const mpp=G.bag.find(i=>i.type==='mp_potion');
+    const pot=G.bag.find(i=>i.type==='potion'&&i.qty>0);
+    if(eli){G.yui.hp=G.yui.maxHp;G.yui.mp=G.yui.maxMp;G.bag=G.bag.filter(i=>i!==eli);msg='\u2697 Full Elixir: <span style="color:var(--hp)">Full HP & MP!</span>';addLog('Used Elixir: Full restore','heal');}
+    else if(ton){battleShield=20;G.bag=G.bag.filter(i=>i!==ton);msg='\u{1F6E1} Shield Tonic: <span style="color:var(--accent2)">DEF +20!</span>';addLog('Used Shield Tonic','heal');}
+    else if(mpp){G.yui.mp=Math.min(G.yui.maxMp,G.yui.mp+30);G.bag=G.bag.filter(i=>i!==mpp);msg='\u{1F48E} Mana Crystal: <span style="color:var(--mp)">+30 MP</span>';addLog('Used Mana Crystal: +30MP','heal');}
+    else if(pot){const heal=Math.round(20+y.level*5);y.hp=Math.min(y.maxHp,y.hp+heal);pot.qty--;if(pot.qty<=0)G.bag=G.bag.filter(i=>i!==pot);msg='\u{1F9EA} Potion: <span style="color:var(--hp)">+'+heal+' HP</span>';addLog('Used Potion: +'+heal+'HP','heal');}
+    else{setBattleLog('No items!');G.battleLocked=false;setActionButtons(true);return;}
+  } else if(action==='run'){
+    const ch=0.5+(y.spd-e.atk*0.05)*0.05;
+    if(Math.random()<Math.max(0.2,Math.min(0.9,ch))){setBattleLog('Yui escaped!');addLog('Escaped!','system');setTimeout(endBattle,800);return;}
+    else msg='Failed to run!';
+  }
+  updateBattleUI();
+  if(e.hp<=0){setBattleLog(msg+'<br><span style="color:var(--accent3)">Enemy defeated!</span>');setTimeout(()=>victorySeq(),600);return;}
+  setBattleLog(msg);setTimeout(enemyTurn,720);
+}
+function enemyTurn(){
+  const y=G.yui,e=G.currentEnemy;
+  const def=y.def+getTotalEquipStat('def')+(battleDefBuff>0?10:0)+battleShield;
+  if(battleDefBuff>0)battleDefBuff--;
+  const dmg=Math.max(1,calcDmg(e.atk,def));
+  y.hp=Math.max(0,y.hp-dmg);
+  setBattleLog(e.icon+' <b>'+e.name+'</b> hits for <span style="color:var(--hp)">'+dmg+' DMG</span>!');
+  addLog(e.name+' \u2192 Yui: '+dmg+' dmg','combat');
+  updateBattleUI();flashScreen();animateSprite('yui-sprite');
+  if(y.hp<=0){
+    if(y.hasRevive){y.hasRevive=false;y.hp=Math.round(y.maxHp*0.5);setBattleLog('<span style="color:var(--accent3)">\u2728 Emergency Revive triggered!</span>');addLog('Emergency Revive!','heal');setTimeout(()=>{G.battleLocked=false;G.battleTurn='player';setActionButtons(true);},1000);return;}
+    setTimeout(()=>defeatSeq(),700);return;
+  }
+  G.battleLocked=false;G.battleTurn='player';setActionButtons(true);
+}
+function victorySeq(){
+  const e=G.currentEnemy,y=G.yui;
+  y.xp+=e.xpReward;y.gold+=e.goldReward;y.kills=(y.kills||0)+1;
+  addLog('Defeated '+e.name+'! +'+e.xpReward+'XP +'+e.goldReward+'G','loot');
+  const drop=tryDrop(y.level);let dm='';
+  if(drop){G.bag.push(drop);dm='<br><span style="color:var(--gold)">Loot: '+drop.icon+' '+drop.name+'</span>';addLog('Loot: '+drop.name,'loot');}
+  setBattleLog('<span style="color:var(--accent3)">Victory!</span> +'+e.xpReward+' XP, +'+e.goldReward+' Gold'+dm);
+  checkLevelUp();checkKillAch(y.kills);battleShield=0;
+  setTimeout(endBattle,1800);
+}
+function checkKillAch(k){[1,10,50,100].forEach(m=>{if(k===m)checkAch('kills_'+m,'Warrior',m+' enemies defeated!');});}
+function defeatSeq(){
+  setBattleLog('Yui was defeated...<br><span style="color:var(--muted)">Returning to Home Base.</span>');
+  addLog('Defeated. Back to Home Base.','combat');
+  G.yui.hp=Math.round(G.yui.maxHp*0.3);G.yui.mp=Math.round(G.yui.maxMp*0.3);
+  G.yui.x=4;G.yui.y=4;G.currentZone='Home Base';battleShield=0;
+  setTimeout(endBattle,1800);
+}
+function endBattle(){
+  resetMovement();pauseEncounters(1600);G.safeSteps=6;
+  G.mode='world';G.currentEnemy=null;G.battleLocked=false;battleDefBuff=0;
+  document.getElementById('battle-screen').classList.remove('active');
+  updateUI();renderBag();
+}
+
+// LEVEL UP
+function checkLevelUp(){
+  while(G.yui.xp>=G.yui.xpNext){
+    G.yui.xp-=G.yui.xpNext;G.yui.level++;G.yui.xpNext=Math.round(G.yui.xpNext*1.5);
+    G.yui.maxHp+=15;G.yui.hp=G.yui.maxHp;G.yui.maxMp+=8;G.yui.mp=G.yui.maxMp;
+    G.yui.atk+=3;G.yui.def+=1;G.yui.spd+=1;
+    addLog('LEVEL UP! Now Lv'+G.yui.level,'level');
+    showPopup('LEVEL UP!','Yui reached <span style="color:var(--accent)">Level '+G.yui.level+'</span>!<br><br>\u2764 MaxHP+15 &nbsp; \u{1F4A7} MaxMP+8<br>\u2694 ATK+3 &nbsp; \u{1F6E1} DEF+1 &nbsp; \u{1F4A8} SPD+1',[{label:'Awesome! \u2728',fn:closePopup,confirm:true}]);
+    checkAch('level_'+G.yui.level,'Level Up','Reached level '+G.yui.level+'!');
+  }
+}
+
+// DROPS
+function tryDrop(lv){
+  if(Math.random()>0.45)return null;
+  const roll=Math.random();const ri=roll<0.55?0:roll<0.80?1:roll<0.95?2:3;
+  const types=['weapon','armor','gloves','boots','potion'];
+  const type=types[Math.floor(Math.random()*types.length)];
+  if(type==='potion'){const ex=G.bag.find(i=>i.type==='potion');if(ex){ex.qty++;return null;}return{id:Date.now(),type:'potion',name:'Health Potion',icon:'\u{1F9EA}',qty:1,stats:{hp:Math.round(20+lv*5)}};}
+  const names={weapon:WEAPON_NAMES,armor:ARMOR_NAMES,gloves:GLOVE_NAMES,boots:BOOT_NAMES};
+  const icons={weapon:'\u2694',armor:'\u{1F6E1}',gloves:'\u{1F9E4}',boots:'\u{1F462}'};
+  const sk={weapon:'atk',armor:'def',gloves:'atk',boots:'spd'};
+  const bs=Math.round(2+lv*1.5+(ri*2));const stat={[sk[type]]:bs};
+  if(ri>=2){const k=Object.keys(stat)[0]+'2';stat[k]=Math.round(bs*0.5);}
+  return{id:Date.now(),type,name:RARITY[ri]+' '+names[type][Math.floor(Math.random()*names[type].length)],icon:icons[type],qty:1,stats:stat,rarity:ri};
+}
+function getTotalEquipStat(stat){let t=0;for(const e of Object.values(G.equipment)){if(e&&e.stats[stat])t+=e.stats[stat];}return t;}
+
+// ACHIEVEMENTS
+function checkAch(key,title,desc){if(!G.achievements.includes(key)){G.achievements.push(key);showAchievement(title,desc);}}
+function showAchievement(title,desc){
+  const t=document.getElementById('achievement-toast');
+  document.getElementById('achievement-text').textContent=desc;
+  t.querySelector('.ach-title').textContent='\u{1F3C6} '+title.toUpperCase();
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// UI
+function updateUI(){
+  const y=G.yui;
+  document.getElementById('stat-level').textContent=y.level;
+  document.getElementById('stat-atk').textContent=y.atk+getTotalEquipStat('atk');
+  document.getElementById('stat-def').textContent=y.def+getTotalEquipStat('def');
+  document.getElementById('stat-spd').textContent=y.spd+getTotalEquipStat('spd');
+  document.getElementById('stat-gold').textContent=y.gold;
+  const ke=document.getElementById('stat-kills');if(ke)ke.textContent=y.kills||0;
+  document.getElementById('stat-hp-text').textContent=y.hp+'/'+y.maxHp;
+  document.getElementById('bar-hp').style.width=(y.hp/y.maxHp*100)+'%';
+  document.getElementById('stat-mp-text').textContent=y.mp+'/'+y.maxMp;
+  document.getElementById('bar-mp').style.width=(y.mp/y.maxMp*100)+'%';
+  document.getElementById('stat-xp-text').textContent=y.xp+'/'+y.xpNext;
+  document.getElementById('bar-xp').style.width=(y.xp/y.xpNext*100)+'%';
+  document.getElementById('loc-name').textContent=G.currentZone;
+  document.getElementById('loc-label').textContent=G.currentZone;
+  renderSkillList();updateMobileUI();
+  if(G.rightTab==='bag')renderBag();else if(G.rightTab==='equip')renderEquip();else renderLog();
+}
+function renderSkillList(){
+  const el=document.getElementById('skill-list');el.innerHTML='';
+  SKILL_DEFS.forEach((s,i)=>{
+    const lk=G.yui.level<s.unlockLv;
+    const div=document.createElement('div');
+    div.className='skill-entry'+(i===G.yui.selectedSkill?' selected':'')+(lk?' skill-locked':'');
+    div.innerHTML=s.icon+' '+s.name+'<br><span class="skill-mp">'+s.mpCost+'MP '+(lk?'[Lv'+s.unlockLv+']':'')+'</span>';
+    if(!lk)div.onclick=()=>{G.yui.selectedSkill=i;renderSkillList();};
+    el.appendChild(div);
+  });
+}
+function setRTab(tab){
+  G.rightTab=tab;
+  document.querySelectorAll('.rpanel-tab').forEach((el,i)=>el.classList.toggle('active',['bag','equip','log'][i]===tab));
+  if(tab==='bag')renderBag();else if(tab==='equip')renderEquip();else renderLog();
+}
+function renderBagTo(el){
+  el.innerHTML='';
+  if(!G.bag.length){el.innerHTML='<div style="color:var(--muted);font-size:17px;padding:8px;">Bag is empty.</div>';return;}
+  G.bag.forEach(item=>{
+    const div=document.createElement('div');div.className='item-slot';
+    const rc=item.rarity!=null?RARITY_COLOR[item.rarity]:'#d4d0e8';
+    const ss=Object.entries(item.stats).map(([k,v])=>'+'+v+k.replace('2','')).join(' ');
+    div.innerHTML='<span class="item-icon">'+item.icon+'</span><div class="item-info"><div class="item-name" style="color:'+rc+'">'+item.name+'</div><div class="item-stats">'+ss+'</div></div><span class="item-qty">'+(item.qty>1?'x'+item.qty:'')+'</span>';
+    const cons=['potion','mp_potion','elixir','shield_tonic'];
+    if(!cons.includes(item.type)){div.title='Click to equip';div.onclick=()=>equipItem(item);}else{div.title='Consumable';div.style.cursor='default';}
+    el.appendChild(div);
+  });
+}
+function renderBag(){renderBagTo(document.getElementById('right-content'));}
+function renderEquipTo(el){
+  el.innerHTML='';
+  [['weapon','\u2694 Weapon'],['armor','\u{1F6E1} Armor'],['gloves','\u{1F9E4} Gloves'],['boots','\u{1F462} Boots']].forEach(([key,label])=>{
+    const eq=G.equipment[key];const sec=document.createElement('div');sec.className='equip-section';
+    sec.innerHTML='<div class="equip-label">'+label+'</div>';
+    const slot=document.createElement('div');slot.className='equip-slot';
+    if(eq){const rc=eq.rarity!=null?RARITY_COLOR[eq.rarity]:'#d4d0e8';const ss=Object.entries(eq.stats).map(([k,v])=>'+'+v+k.replace('2','')).join(' ');slot.innerHTML='<span>'+eq.icon+'</span><div style="flex:1"><div style="color:'+rc+';font-size:16px">'+eq.name+'</div><div style="color:var(--muted);font-size:14px">'+ss+'</div></div>';slot.onclick=()=>unequipItem(key);slot.title='Click to unequip';}
+    else slot.innerHTML='<span class="slot-empty">-- empty --</span>';
+    sec.appendChild(slot);el.appendChild(sec);
+  });
+}
+function renderEquip(){renderEquipTo(document.getElementById('right-content'));}
+function renderLogTo(el){
+  el.innerHTML='';
+  [...G.log].reverse().slice(0,50).forEach(e=>{const div=document.createElement('div');div.className='log-entry '+e.type;div.textContent=e.msg;el.appendChild(div);});
+}
+function renderLog(){renderLogTo(document.getElementById('right-content'));}
+function addLog(msg,type='system'){G.log.push({msg,type});if(G.log.length>200)G.log.splice(0,50);if(G.rightTab==='log')renderLog();}
+function equipItem(item){const slot=item.type;const old=G.equipment[slot];if(old)G.bag.push(old);G.equipment[slot]=item;G.bag=G.bag.filter(i=>i!==item);addLog('Equipped: '+item.name,'system');updateUI();if(G.rightTab==='equip')renderEquip();}
+function unequipItem(slot){const item=G.equipment[slot];if(!item)return;G.bag.push(item);G.equipment[slot]=null;addLog('Unequipped: '+item.name,'system');updateUI();renderEquip();}
+
+function showPopup(title,body,buttons){
+  document.getElementById('popup-title').textContent=title;
+  document.getElementById('popup-body').innerHTML=body;
+  const btns=document.getElementById('popup-btns');btns.innerHTML='';
+  buttons.forEach(b=>{const btn=document.createElement('button');btn.className='popup-btn'+(b.confirm?' confirm':'')+(b.danger?' danger':'');btn.textContent=b.label;btn.onclick=b.fn;btns.appendChild(btn);});
+  document.getElementById('popup-overlay').classList.add('active');
+}
+function closePopup(){document.getElementById('popup-overlay').classList.remove('active');}
+function flashScreen(){const f=document.getElementById('flash');f.style.opacity='0.35';setTimeout(()=>f.style.opacity='0',150);}
+function switchTab(tab){G.worldTab=tab;}
+
+// MOBILE
+function setTextIfExists(id,t){const el=document.getElementById(id);if(el)el.textContent=t;}
+function setWidthIfExists(id,w){const el=document.getElementById(id);if(el)el.style.width=w;}
+function updateMobileUI(){
+  const y=G.yui;
+  setTextIfExists('m-stat-level',y.level);
+  setTextIfExists('m-stat-atk',y.atk+getTotalEquipStat('atk'));
+  setTextIfExists('m-stat-def',y.def+getTotalEquipStat('def'));
+  setTextIfExists('m-stat-spd',y.spd+getTotalEquipStat('spd'));
+  setTextIfExists('m-stat-gold',y.gold);
+  setTextIfExists('m-stat-hp-text',y.hp+'/'+y.maxHp);
+  setTextIfExists('m-stat-mp-text',y.mp+'/'+y.maxMp);
+  setTextIfExists('m-stat-xp-text',y.xp+'/'+y.xpNext);
+  // Truncate long zone names for mobile
+  const zoneName=G.currentZone.length>8?G.currentZone.split(' ')[0]:G.currentZone;
+  setTextIfExists('m-loc-name',zoneName);
+  setWidthIfExists('m-bar-hp',(y.hp/y.maxHp*100)+'%');
+  setWidthIfExists('m-bar-mp',(y.mp/y.maxMp*100)+'%');
+  setWidthIfExists('m-bar-xp',(y.xp/y.xpNext*100)+'%');
+  if(document.getElementById('mobile-drawer')?.classList.contains('open'))
+    renderMobilePanel(G.mobileTab||'bag');
+}
+function openMobilePanel(tab){
+  resetMovement();pauseEncounters(900);
+  G.mobileTab=tab;
+  if(tab==='shop'){openShop();return;}
+  const drawer=document.getElementById('mobile-drawer');drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
+  document.querySelectorAll('.mobile-nav-btn').forEach((b,i)=>b.classList.toggle('active',['bag','equip','shop','skills','save'][i]===tab));
+  renderMobilePanel(tab);
+}
+function closeMobilePanel(){resetMovement();pauseEncounters(900);const d=document.getElementById('mobile-drawer');d.classList.remove('open');d.setAttribute('aria-hidden','true');document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));}
+function renderMobilePanel(tab){
+  const title={bag:'BAG',equip:'GEAR',skills:'SKILLS',log:'QUEST LOG'}[tab]||'MENU';
+  document.getElementById('mobile-drawer-title').textContent=title;
+  const el=document.getElementById('mobile-content');
+  if(tab==='bag')renderBagTo(el);else if(tab==='equip')renderEquipTo(el);else if(tab==='skills')renderSkillsTo(el);else renderLogTo(el);
+}
+function renderSkillsTo(el){
+  el.innerHTML='';
+  SKILL_DEFS.forEach((s,i)=>{
+    const lk=G.yui.level<s.unlockLv;
+    const div=document.createElement('div');div.className='skill-entry'+(i===G.yui.selectedSkill?' selected':'')+(lk?' skill-locked':'');
+    div.innerHTML=s.icon+' '+s.name+'<br><span class="skill-mp">'+s.mpCost+'MP — '+s.desc+' '+(lk?'[Lv'+s.unlockLv+']':'')+'</span>';
+    if(!lk)div.onclick=()=>{G.yui.selectedSkill=i;renderMobilePanel('skills');renderSkillList();};
+    el.appendChild(div);
+  });
+}
+
+// ==================== SOUND ENGINE ====================
+let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(freq,type,dur,vol=0.15,delay=0){
+  try{
+    const ac=getAudio();const t=ac.currentTime+delay;
+    const osc=ac.createOscillator();const gain=ac.createGain();
+    osc.connect(gain);gain.connect(ac.destination);
+    osc.type=type;osc.frequency.setValueAtTime(freq,t);
+    gain.gain.setValueAtTime(vol,t);gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    osc.start(t);osc.stop(t+dur);
+  }catch(e){}
+}
+function sfxAttack(){playTone(220,'sawtooth',0.08,0.12);playTone(180,'square',0.06,0.08,0.05);}
+function sfxHit(){playTone(110,'square',0.12,0.18);playTone(80,'sawtooth',0.1,0.1,0.06);}
+function sfxSkill(){playTone(440,'sine',0.1,0.12);playTone(660,'sine',0.08,0.1,0.05);playTone(880,'sine',0.06,0.08,0.1);}
+function sfxHeal(){playTone(523,'sine',0.08,0.1);playTone(659,'sine',0.08,0.1,0.06);playTone(784,'sine',0.08,0.1,0.12);}
+function sfxLevelUp(){[261,329,392,523,659,784].forEach((f,i)=>playTone(f,'sine',0.15,0.12,i*0.08));}
+function sfxVictory(){[392,523,659,784].forEach((f,i)=>playTone(f,'square',0.2,0.1,i*0.1));}
+function sfxDefeat(){[220,196,174,156].forEach((f,i)=>playTone(f,'sawtooth',0.2,0.12,i*0.12));}
+function sfxStep(){playTone(80+Math.random()*20,'sine',0.04,0.04);}
+function sfxShop(){playTone(660,'sine',0.06,0.08);playTone(880,'sine',0.06,0.06,0.07);}
+function sfxSave(){playTone(523,'sine',0.06,0.08);playTone(784,'sine',0.06,0.06,0.08);}
+function sfxRun(){playTone(300,'sawtooth',0.06,0.1);playTone(200,'sawtooth',0.06,0.08,0.08);}
+
+// ==================== FLOATING DAMAGE NUMBERS ====================
+const dmgFloaters=[];
+function spawnFloater(text,x,y,color='#e86a7e',big=false){
+  const el=document.createElement('div');
+  el.className='dmg-floater'+(big?' big':'');
+  el.style.cssText=`position:absolute;left:${x}px;top:${y}px;color:${color};font-family:'Press Start 2P',monospace;font-size:${big?11:9}px;pointer-events:none;z-index:90;white-space:nowrap;text-shadow:0 0 8px ${color},0 2px 4px rgba(0,0,0,0.8);transform:translateX(-50%);`;
+  el.textContent=text;
+  document.getElementById('battle-screen').appendChild(el);
+  let vy=-2.5,life=60,tick=0;
+  const anim=()=>{
+    tick++;vy*=0.96;
+    const ny=parseFloat(el.style.top)+vy;
+    el.style.top=ny+'px';
+    el.style.opacity=Math.min(1,life/20);
+    life--;
+    if(life>0)requestAnimationFrame(anim);else el.remove();
+  };
+  requestAnimationFrame(anim);
+}
+
+// Inject floater CSS
+(()=>{const s=document.createElement('style');s.textContent='.dmg-floater{animation:none;}.dmg-floater.big{font-size:13px!important;}';document.head.appendChild(s);})();
+
+// Wrap battleAction to add floaters and sounds
+const _origBattleAction=battleAction;
+battleAction=function(action){
+  // Intercept for sounds/floaters — delegate to original
+  if(action==='attack')sfxAttack();
+  else if(action==='skill')sfxSkill();
+  else if(action==='item')sfxHeal();
+  else if(action==='run')sfxRun();
+  _origBattleAction(action);
+};
+
+// Patch calcDmg to record last damage for floaters
+let _lastDmg=0;
+const _origCalc=calcDmg;
+calcDmg=function(a,d){const r=_origCalc(a,d);_lastDmg=r;return r;};
+
+// Patch victorySequence hook
+const _origVictory=victorySeq;
+victorySeq=function(){sfxVictory();_origVictory();};
+
+// Patch defeatSeq hook
+const _origDefeat=defeatSeq;
+defeatSeq=function(){sfxDefeat();_origDefeat();};
+
+// Patch checkLevelUp to fire sound
+const _origLvCheck=checkLevelUp;
+checkLevelUp=function(){const lv=G.yui.level;_origLvCheck();if(G.yui.level>lv)sfxLevelUp();};
+
+// Patch saveGame for sound
+const _origSave=saveGame;
+saveGame=function(){_origSave();sfxSave();};
+
+// Patch movePlayer for step sound (every 3 steps)
+let _stepN=0;
+const _origMove=movePlayer;
+movePlayer=function(dx,dy){_origMove(dx,dy);_stepN++;if(_stepN%3===0)sfxStep();};
+
+// Patch openShop
+const _origOpenShop=openShop;
+openShop=function(){sfxShop();_origOpenShop();};
+
+// ==================== PARTICLES ====================
+const particles=[];
+function spawnParticles(cx,cy,color,count=8,spread=30){
+  for(let i=0;i<count;i++){
+    particles.push({
+      x:cx,y:cy,
+      vx:(Math.random()-0.5)*spread*0.1,
+      vy:(Math.random()-1.2)*spread*0.1,
+      life:1,decay:0.03+Math.random()*0.04,
+      size:2+Math.random()*4,color,
+    });
+  }
+}
+function updateParticles(W,H){
+  ctx.save();
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=p.decay;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+  ctx.globalAlpha=1;
+}
+
+// ==================== WORLD AMBIENCE ====================
+let ambTick=0;
+const STAR_POSITIONS=Array.from({length:40},()=>({x:Math.random(),y:Math.random(),r:Math.random()}));
+
+function renderWorldAmbience(W,H){
+  // Subtle stars in void areas
+  ambTick++;
+  const t=ambTick*0.02;
+  STAR_POSITIONS.forEach(s=>{
+    const sx=s.x*W,sy=s.y*H;
+    const blink=0.2+0.15*Math.sin(t+s.r*10);
+    ctx.globalAlpha=blink;
+    ctx.fillStyle='#aaaacc';
+    ctx.beginPath();ctx.arc(sx,sy,0.8,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+// Enhance render() to include ambience and particles
+const _origRender=render;
+render=function(){
+  if(G.mode==='battle'||G.mode==='shop'){renderMinimap();return;}
+  const W=worldCanvas.width,H=worldCanvas.height,ts=G.tileSize;
+  G.camera.x=Math.round(G.yui.x*ts-W/2);
+  G.camera.y=Math.round(G.yui.y*ts-H/2);
+  ctx.fillStyle='#050510';ctx.fillRect(0,0,W,H);
+
+  // Starfield behind void
+  renderWorldAmbience(W,H);
+
+  const sX=Math.max(0,Math.floor(G.camera.x/ts));
+  const sY=Math.max(0,Math.floor(G.camera.y/ts));
+  const eX=Math.min(G.mapW,Math.ceil((G.camera.x+W)/ts));
+  const eY=Math.min(G.mapH,Math.ceil((G.camera.y+H)/ts));
+
+  for(let y=sY;y<eY;y++){for(let x=sX;x<eX;x++){
+    const tile=G.map[y][x];
+    const px=x*ts-G.camera.x,py=y*ts-G.camera.y;
+    ctx.fillStyle=TILE_COLOR[tile]||'#1a1a2a';ctx.fillRect(px,py,ts,ts);
+
+    if(tile===TILE.TREE){
+      ctx.fillStyle='#1a3a1a';ctx.fillRect(px+2,py+2,ts-4,ts-4);
+      ctx.font=(ts-2)+'px serif';ctx.textAlign='center';ctx.fillText('\u{1F332}',px+ts/2,py+ts-1);
+    } else if(tile===TILE.WATER){
+      // Animated shimmer
+      const wave=Math.sin(ambTick*0.08+x*0.7+y*0.5)*2;
+      ctx.fillStyle='#142234';ctx.fillRect(px+1,py+ts/2,ts-2,ts/2-1);
+      ctx.fillStyle=`rgba(126,200,227,${0.05+0.04*Math.sin(ambTick*0.05+x+y)})`;
+      ctx.fillRect(px+2,py+ts/2+2+wave,ts-4,3);
+      ctx.fillStyle=`rgba(100,160,220,${0.03+0.02*Math.cos(ambTick*0.07+x*1.3)})`;
+      ctx.fillRect(px+3,py+ts-6+wave*0.5,ts-6,2);
+    } else if(tile===TILE.HOME){
+      ctx.fillStyle='#3a2e18';ctx.fillRect(px+1,py+1,ts-2,ts-2);
+      // Warm glow
+      const gAlpha=0.06+0.03*Math.sin(ambTick*0.04);
+      ctx.fillStyle=`rgba(240,180,60,${gAlpha})`;ctx.fillRect(px,py,ts,ts);
+    } else if(tile===TILE.BRIDGE){
+      ctx.fillStyle='#503820';ctx.fillRect(px+3,py,ts-6,ts);
+      ctx.fillStyle='#604030';ctx.fillRect(px+4,py+2,ts-8,2);
+    } else if(tile===TILE.SHOP){
+      ctx.fillStyle='#280c3a';ctx.fillRect(px,py,ts,ts);
+      // Shop pulse glow
+      const sAlpha=0.12+0.08*Math.sin(ambTick*0.07);
+      ctx.fillStyle=`rgba(200,106,232,${sAlpha})`;ctx.fillRect(px,py,ts,ts);
+      ctx.font=(ts-4)+'px serif';ctx.textAlign='center';ctx.fillText('\u{1F6D2}',px+ts/2,py+ts-2);
+    } else if(tile===TILE.NPC){
+      const npc=NPC_DEFS.find(n=>n.x===x&&n.y===y);
+      // NPC idle bob
+      const bob=Math.sin(ambTick*0.06+x+y)*2;
+      ctx.font=(ts-2)+'px serif';ctx.textAlign='center';ctx.fillText(npc?npc.sprite:'?',px+ts/2,py+ts-1+bob);
+      // NPC indicator dot
+      const dotA=0.5+0.4*Math.sin(ambTick*0.1+x);
+      ctx.fillStyle=`rgba(104,232,184,${dotA})`;
+      ctx.beginPath();ctx.arc(px+ts-4,py+4,2,0,Math.PI*2);ctx.fill();
+    }
+    ctx.strokeStyle='rgba(255,255,255,0.02)';ctx.strokeRect(px,py,ts,ts);
+  }}
+
+  // Zone labels with glow
+  ctx.font='11px VT323';ctx.textAlign='left';
+  for(const z of G.zones){
+    const zx=z.x*ts-G.camera.x+2,zy=z.y*ts-G.camera.y+12;
+    if(zx>-100&&zy>-20&&zx<W+100&&zy<H+20){
+      ctx.fillStyle='rgba(255,255,255,0.18)';ctx.fillText(z.name,zx,zy);
+    }
+  }
+
+  // Player shadow
+  const px=G.yui.x*ts-G.camera.x,py=G.yui.y*ts-G.camera.y;
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();ctx.ellipse(px+ts/2,py+ts-3,ts*0.3,ts*0.1,0,0,Math.PI*2);ctx.fill();
+  // Player
+  ctx.font=(ts-2)+'px serif';ctx.textAlign='center';ctx.fillText('\u{1F980}',px+ts/2,py+ts-2);
+  // Player zone-colored glow
+  const pz=G.zones.find(z=>G.yui.x>=z.x&&G.yui.x<z.x+z.w&&G.yui.y>=z.y&&G.yui.y<z.y+z.h);
+  if(pz){
+    const gc=pz.harder?'#e86a7e':pz.boss?'#b8e986':pz.heal?'#f0c060':'#7ec8e3';
+    const glowA=0.08+0.04*Math.sin(ambTick*0.06);
+    ctx.fillStyle=`${gc}${Math.round(glowA*255).toString(16).padStart(2,'0')}`;
+    ctx.beginPath();ctx.arc(px+ts/2,py+ts/2,ts*0.7,0,Math.PI*2);ctx.fill();
+  }
+
+  // Nearby interaction hint
+  const hint=getNearbyHint();
+  if(hint){
+    const hAlpha=0.7+0.3*Math.sin(ambTick*0.08);
+    ctx.globalAlpha=hAlpha;
+    ctx.fillStyle='rgba(104,232,184,0.9)';ctx.font='bold 12px VT323';ctx.textAlign='center';
+    ctx.fillText('[Space] '+hint,px+ts/2,py-5);
+    ctx.globalAlpha=1;
+  }
+
+  // World particles
+  updateParticles(W,H);
+
+  renderMinimap();
+};
+
+// ==================== BATTLE SCREEN ENHANCEMENTS ====================
+// Live battle background animation
+let battleTick=0;
+const battleCanvas=document.createElement('canvas');
+battleCanvas.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:1;width:100%;height:100%;opacity:0.5;';
+document.getElementById('battle-screen').prepend(battleCanvas);
+let bctx=null;
+
+function animateBattle(){
+  if(G.mode!=='battle'){requestAnimationFrame(animateBattle);return;}
+  const el=document.getElementById('battle-screen');
+  const r=el.getBoundingClientRect();
+  battleCanvas.width=r.width||400;battleCanvas.height=r.height||300;
+  if(!bctx)bctx=battleCanvas.getContext('2d');
+  bctx.clearRect(0,0,battleCanvas.width,battleCanvas.height);
+  battleTick++;
+  const W=battleCanvas.width,H=battleCanvas.height;
+  // Sweeping scanlines
+  for(let i=0;i<3;i++){
+    const lineY=((battleTick*1.2+i*H/3)%H);
+    const g=bctx.createLinearGradient(0,lineY-20,0,lineY+20);
+    g.addColorStop(0,'transparent');g.addColorStop(0.5,'rgba(126,200,227,0.04)');g.addColorStop(1,'transparent');
+    bctx.fillStyle=g;bctx.fillRect(0,lineY-20,W,40);
+  }
+  // Corner hexagons
+  bctx.strokeStyle='rgba(37,37,56,0.6)';bctx.lineWidth=1;
+  for(let row=-1;row<6;row++){for(let col=-1;col<12;col++){
+    const hx=col*40+(row%2)*20,hy=row*35;
+    bctx.beginPath();
+    for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;bctx.lineTo(hx+16*Math.cos(a),hy+16*Math.sin(a));}
+    bctx.closePath();bctx.stroke();
+  }}
+  requestAnimationFrame(animateBattle);
+}
+requestAnimationFrame(animateBattle);
+
+// ==================== DAMAGE FLOATERS ON ENEMY TURNS ====================
+// Override enemyTurn to add floaters/sounds
+const _origEnemyTurn=enemyTurn;
+enemyTurn=function(){
+  // We need to intercept the damage — patch by hooking updateBattleUI after
+  const hpBefore=G.yui.hp;
+  _origEnemyTurn();
+  // Sound is handled in the original via flashScreen; already called
+  sfxHit();
+};
+
+// Override setBattleLog to also show floaters at enemy sprite position
+const _origSetBattleLog=setBattleLog;
+setBattleLog=function(m){
+  _origSetBattleLog(m);
+  // Parse damage from message
+  const dmgMatch=m.match(/(\d+)\s*DMG/);
+  if(!dmgMatch)return;
+  const dmg=parseInt(dmgMatch[1]);
+  const isEnemy=m.includes('strikes')||m.includes('Skill')||m.includes('hit');
+  const isBoss=m.includes(G.currentEnemy?.name||'XXX');
+  // Floater on the enemy sprite area
+  const bscreen=document.getElementById('battle-screen');
+  const br=bscreen.getBoundingClientRect();
+  const eSprite=document.getElementById('enemy-sprite');
+  const ySprite=document.getElementById('yui-sprite');
+  if(dmg&&eSprite&&!isBoss){
+    const er=eSprite.getBoundingClientRect();
+    const relX=er.left-br.left+er.width/2;
+    const relY=er.top-br.top;
+    const color=isEnemy?'#e86a7e':'#7ec8e3';
+    spawnFloater('-'+dmg,relX,relY,color,dmg>50);
+  }
+};
+
+// ==================== ACHIEVEMENT PANEL IN RIGHT TAB ====================
+function renderAchievements(){
+  const el=document.getElementById('right-content');
+  el.innerHTML='';
+  const title=document.createElement('div');
+  title.style.cssText='font-family:"Press Start 2P",monospace;font-size:7px;color:var(--accent3);margin-bottom:10px;padding:4px 0;border-bottom:1px solid var(--border);';
+  title.textContent='\u{1F3C6} ACHIEVEMENTS ('+G.achievements.length+')';
+  el.appendChild(title);
+  if(!G.achievements.length){
+    const empty=document.createElement('div');empty.style.cssText='color:var(--muted);font-size:15px;padding:8px;';
+    empty.textContent='No achievements yet.';el.appendChild(empty);return;
+  }
+  const achLabels={
+    'zone_Home_Base':'\u{1F3E0} Home Sweet Home','zone_Forest_Path':'\u{1F332} Forest Explorer','zone_Dark_Depths':'\u{1F30D} Into the Depths','zone_Crystal_Caves':'\u{1F48E} Cave Diver',
+    'shopper':'\u{1F6D2} First Purchase','kills_1':'\u{1F4AA} First Blood','kills_10':'\u2694 Bug Slayer','kills_50':'\u{1F4A5} Debugger','kills_100':'\u{1F451} Code Conqueror',
+    'level_5':'\u2B06 Lv5 Reached','level_10':'\u{1F4AB} Lv10 Reached','level_15':'\u{1F525} Lv15 Reached',
+  };
+  G.achievements.forEach(k=>{
+    const div=document.createElement('div');
+    div.style.cssText='background:rgba(184,233,134,0.06);border:1px solid rgba(184,233,134,0.2);padding:5px 8px;margin-bottom:4px;font-size:14px;color:var(--accent3);';
+    div.textContent=achLabels[k]||'\u{1F3C6} '+k.replace(/_/g,' ');
+    el.appendChild(div);
+  });
+}
+
+// Patch setRTab to handle achievements
+const _origSetRTab=setRTab;
+setRTab=function(tab){
+  if(tab==='ach'){G.rightTab='ach';document.querySelectorAll('.rpanel-tab').forEach((el,i)=>el.classList.toggle('active',i===3));renderAchievements();return;}
+  _origSetRTab(tab);
+};
+
+// Add achievement tab to right panel
+(()=>{
+  const tabs=document.getElementById('right-tabs');
+  const achBtn=document.createElement('button');
+  achBtn.className='rpanel-tab';achBtn.textContent='\u{1F3C6}';achBtn.onclick=()=>setRTab('ach');
+  achBtn.title='Achievements';
+  tabs.appendChild(achBtn);
+})();
+
+// Also add to mobile panel
+const _origRenderMobilePanel=renderMobilePanel;
+renderMobilePanel=function(tab){
+  if(tab==='ach'){
+    document.getElementById('mobile-drawer-title').textContent='ACHIEVEMENTS';
+    renderAchievements();return;
+  }
+  _origRenderMobilePanel(tab);
+};
+
+// ==================== ZONE TRANSITION FLASH ====================
+let zoneFlashAlpha=0;
+const _origUpdateZone=updateZone;
+updateZone=function(){
+  const before=G.currentZone;
+  _origUpdateZone();
+  if(G.currentZone!==before){
+    // Flash the canvas edge
+    zoneFlashAlpha=0.6;
+    // Spawn particles at player
+    const px=(G.yui.x*G.tileSize-G.camera.x)+G.tileSize/2;
+    const py=(G.yui.y*G.tileSize-G.camera.y)+G.tileSize/2;
+    const z=G.zones.find(z=>z.name===G.currentZone);
+    const col=z?.harder?'#e86a7e':z?.boss?'#b8e986':z?.heal?'#f0c060':'#7ec8e3';
+    spawnParticles(px,py,col,12,40);
+  }
+};
+
+// ==================== STATS CHART IN LEFT PANEL ====================
+(()=>{
+  // Add a tiny radar/hexagon stat chart below stats
+  const canvas=document.createElement('canvas');
+  canvas.id='stat-chart';canvas.width=160;canvas.height=110;
+  canvas.style.cssText='display:block;width:160px;height:110px;margin-top:6px;';
+  const skillsPanel=document.getElementById('skills-panel');
+  skillsPanel.parentNode.insertBefore(canvas,skillsPanel);
+  const label=document.createElement('div');label.style.cssText='font-size:13px;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:3px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;';
+  label.textContent='Stats Radar';
+  skillsPanel.parentNode.insertBefore(label,canvas);
+})();
+
+function renderStatChart(){
+  const canvas=document.getElementById('stat-chart');if(!canvas)return;
+  const c=canvas.getContext('2d');const W=160,H=110,cx=W/2,cy=H/2+5,r=40;
+  c.clearRect(0,0,W,H);
+  const y=G.yui;
+  const stats=[
+    {name:'ATK',val:Math.min(1,(y.atk+getTotalEquipStat('atk'))/80),color:'#e86a7e'},
+    {name:'DEF',val:Math.min(1,(y.def+getTotalEquipStat('def'))/50),color:'#7e9be8'},
+    {name:'SPD',val:Math.min(1,(y.spd+getTotalEquipStat('spd'))/40),color:'#b8e986'},
+    {name:'HP%',val:y.hp/y.maxHp,color:'#e8936a'},
+    {name:'MP%',val:y.mp/y.maxMp,color:'#7ec8e3'},
+    {name:'EXP',val:y.xp/y.xpNext,color:'#f0c060'},
+  ];
+  const N=stats.length;
+  // Grid
+  for(let ring=1;ring<=3;ring++){
+    c.beginPath();c.strokeStyle=`rgba(37,37,56,${0.8})`;c.lineWidth=1;
+    for(let i=0;i<N;i++){const a=Math.PI*2/N*i-Math.PI/2;const rr=r*ring/3;if(i===0)c.moveTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));else c.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));}
+    c.closePath();c.stroke();
+  }
+  // Spokes
+  for(let i=0;i<N;i++){const a=Math.PI*2/N*i-Math.PI/2;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));c.strokeStyle='rgba(37,37,56,0.8)';c.lineWidth=1;c.stroke();}
+  // Fill
+  c.beginPath();
+  stats.forEach((s,i)=>{const a=Math.PI*2/N*i-Math.PI/2;const rv=r*s.val;if(i===0)c.moveTo(cx+rv*Math.cos(a),cy+rv*Math.sin(a));else c.lineTo(cx+rv*Math.cos(a),cy+rv*Math.sin(a));});
+  c.closePath();
+  const grad=c.createRadialGradient(cx,cy,0,cx,cy,r);
+  grad.addColorStop(0,'rgba(232,147,106,0.3)');grad.addColorStop(1,'rgba(126,200,227,0.1)');
+  c.fillStyle=grad;c.fill();
+  c.strokeStyle='rgba(232,147,106,0.7)';c.lineWidth=1.5;c.stroke();
+  // Points & labels
+  stats.forEach((s,i)=>{
+    const a=Math.PI*2/N*i-Math.PI/2;const rv=r*s.val;
+    c.fillStyle=s.color;c.beginPath();c.arc(cx+rv*Math.cos(a),cy+rv*Math.sin(a),2.5,0,Math.PI*2);c.fill();
+    const lx=cx+(r+12)*Math.cos(a),ly=cy+(r+12)*Math.sin(a);
+    c.font='8px VT323';c.fillStyle='rgba(212,208,232,0.7)';c.textAlign='center';c.fillText(s.name,lx,ly+3);
+  });
+}
+
+// Patch updateUI to also redraw stat chart
+const _origUpdateUI=updateUI;
+updateUI=function(){
+  _origUpdateUI();
+  renderStatChart();
+};
+
+// ==================== BATTLE COMBO COUNTER ====================
+let comboCount=0,comboTimer=null;
+function addCombo(){
+  comboCount++;clearTimeout(comboTimer);
+  comboTimer=setTimeout(()=>{comboCount=0;},4000);
+  if(comboCount>=3){
+    const msg=comboCount+'x COMBO!';
+    const bscreen=document.getElementById('battle-screen');
+    const br=bscreen.getBoundingClientRect();
+    spawnFloater(msg,br.width/2,br.height*0.3,'#f0c060',true);
+  }
+}
+
+// Patch battleAction to track combos
+const _origBA=battleAction;
+battleAction=function(action){
+  if(action==='attack'||action==='skill')addCombo();
+  _origBA(action);
+};
+
+// ==================== HP LOW WARNING ====================
+function checkHpWarning(){
+  const y=G.yui;
+  const pct=y.hp/y.maxHp;
+  const bar=document.getElementById('bar-hp');
+  const bbar=document.getElementById('b-bar-hp');
+  if(pct<0.25){
+    if(bar)bar.style.animation='pulse-red 0.6s ease-in-out infinite';
+    if(bbar)bbar.style.animation='pulse-red 0.6s ease-in-out infinite';
+  } else {
+    if(bar)bar.style.animation='';
+    if(bbar)bbar.style.animation='';
+  }
+}
+// Inject pulse CSS
+(()=>{const s=document.createElement('style');s.textContent='@keyframes pulse-red{0%,100%{opacity:1;}50%{opacity:0.4;}}';document.head.appendChild(s);})();
+
+// Hook into updateBattleUI
+const _origUpdateBUI=updateBattleUI;
+updateBattleUI=function(){_origUpdateBUI();checkHpWarning();};
+
+// ==================== WEATHER SYSTEM ====================
+const weatherTypes=['clear','rain','fog'];
+let currentWeather='clear',weatherTick=0;
+const raindrops=Array.from({length:50},()=>({x:Math.random(),y:Math.random(),speed:0.8+Math.random()*1.2,len:6+Math.random()*10}));
+
+function renderWeather(W,H){
+  weatherTick++;
+  if(currentWeather==='rain'){
+    ctx.save();ctx.strokeStyle='rgba(126,200,227,0.3)';ctx.lineWidth=1;
+    raindrops.forEach(d=>{
+      d.y+=d.speed*0.01;if(d.y>1)d.y=0;
+      const rx=d.x*W,ry=d.y*H;
+      ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx+2,ry+d.len);ctx.stroke();
+    });
+    ctx.restore();
+  } else if(currentWeather==='fog'){
+    const fogA=0.06+0.03*Math.sin(weatherTick*0.01);
+    ctx.fillStyle=`rgba(180,180,220,${fogA})`;ctx.fillRect(0,0,W,H);
+  }
+}
+
+// Weather changes every 3 minutes
+setInterval(()=>{
+  const prev=currentWeather;
+  currentWeather=weatherTypes[Math.floor(Math.random()*weatherTypes.length)];
+  if(currentWeather!==prev)addLog('Weather changed: '+currentWeather,'system');
+},180000);
+
+// Hook weather into render
+const _render2=render;
+render=function(){
+  _render2();
+  if(G.mode==='world'&&(currentWeather==='rain'||currentWeather==='fog')){
+    renderWeather(worldCanvas.width,worldCanvas.height);
+  }
+};
+
+// ==================== QUICK STAT TOOLTIP ====================
+// Hovering over equip slots shows stat diff
+function showStatDiff(item){
+  if(!item||item.type==='potion')return;
+  const slot=item.type;const curr=G.equipment[slot];
+  const lines=Object.entries(item.stats).map(([k,v])=>{
+    const sk=k.replace('2','');const cVal=curr?curr.stats[sk]||0:0;
+    const diff=v-cVal;const arrow=diff>0?'\u25B2':diff<0?'\u25BC':'\u25AC';
+    const col=diff>0?'color:var(--accent3)':diff<0?'color:var(--hp)':'color:var(--muted)';
+    return `<span style="${col}">${arrow}${sk.toUpperCase()} ${v} (${diff>0?'+':''}${diff})</span>`;
+  });
+  const tt=document.getElementById('item-tooltip')||createTooltip();
+  tt.innerHTML=`<b style="color:var(--gold)">${item.name}</b><br>${lines.join('<br>')}`;
+  tt.style.display='block';
+}
+function hideStatDiff(){const tt=document.getElementById('item-tooltip');if(tt)tt.style.display='none';}
+function createTooltip(){
+  const tt=document.createElement('div');tt.id='item-tooltip';
+  tt.style.cssText='display:none;position:fixed;background:rgba(10,10,18,0.97);border:1px solid var(--gold);padding:8px 12px;font-size:15px;color:var(--text);z-index:500;pointer-events:none;max-width:200px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,0.5);';
+  document.body.appendChild(tt);return tt;
+}
+document.addEventListener('mousemove',e=>{const tt=document.getElementById('item-tooltip');if(tt&&tt.style.display!=='none'){tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';}});
+
+// Patch renderBagTo to add tooltip hover
+const _origRBT=renderBagTo;
+renderBagTo=function(el){
+  _origRBT(el);
+  el.querySelectorAll('.item-slot').forEach((slot,i)=>{
+    const item=G.bag[i];if(!item)return;
+    slot.addEventListener('mouseenter',()=>showStatDiff(item));
+    slot.addEventListener('mouseleave',hideStatDiff);
+  });
+};
+
+// ==================== ENHANCED MINIMAP — ZONE OUTLINES ====================
+const _origRenderMinimap=renderMinimap;
+renderMinimap=function(){
+  _origRenderMinimap();
+  const mw=160,mh=120,tw=mw/G.mapW,th=mh/G.mapH;
+  // Zone borders
+  G.zones.forEach(z=>{
+    mmCtx.strokeStyle=z.harder?'rgba(232,106,126,0.4)':z.boss?'rgba(184,233,134,0.4)':z.heal?'rgba(240,192,96,0.4)':'rgba(126,200,227,0.3)';
+    mmCtx.lineWidth=1;
+    mmCtx.strokeRect(z.x*tw,z.y*th,z.w*tw,z.h*th);
+  });
+  // Pulsing player dot
+  const pDot=0.7+0.3*Math.sin(Date.now()*0.005);
+  mmCtx.fillStyle=`rgba(232,147,106,${pDot})`;
+  mmCtx.beginPath();mmCtx.arc(G.yui.x*tw+tw/2,G.yui.y*th+th/2,2.5,0,Math.PI*2);mmCtx.fill();
+};
+
+
+// ==================== MOBILE TOUCH SAFETY ====================
+function setupMobileControls(){
+  const dirDelta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+  let activeDpadPointer=null;
+
+  function pressDirection(dir,e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    if(G.mode!=='world')return;
+    closeNPCDialogue();
+    // One tap = one tile. dpadPress has duplicate-event protection.
+    dpadPress(dir);
+  }
+
+  function releaseDirection(e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    activeDpadPointer=null;
+    dpadRelease();
+    pauseEncounters(180);
+  }
+
+  document.querySelectorAll('#dpad .dpad-btn[data-dir]').forEach(btn=>{
+    if(btn.dataset.bound==='1')return;
+    btn.dataset.bound='1';
+    const dir=btn.dataset.dir;
+
+    btn.addEventListener('pointerdown',e=>{
+      activeDpadPointer=e.pointerId;
+      if(btn.setPointerCapture){
+        try{btn.setPointerCapture(e.pointerId);}catch(_err){}
+      }
+      pressDirection(dir,e);
+    },{passive:false});
+
+    btn.addEventListener('pointerup',releaseDirection,{passive:false});
+    btn.addEventListener('pointercancel',releaseDirection,{passive:false});
+    btn.addEventListener('lostpointercapture',releaseDirection,{passive:false});
+
+    // Safari/older Android fallback: pointer events sometimes become shy little ghosts.
+    btn.addEventListener('touchstart',e=>pressDirection(dir,e),{passive:false});
+    btn.addEventListener('touchend',releaseDirection,{passive:false});
+    btn.addEventListener('touchcancel',releaseDirection,{passive:false});
+
+    btn.addEventListener('mousedown',e=>pressDirection(dir,e));
+    btn.addEventListener('mouseup',releaseDirection);
+    btn.addEventListener('mouseleave',releaseDirection);
+    btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();},{passive:false});
+    btn.addEventListener('contextmenu',e=>e.preventDefault());
+  });
+
+  const talk=document.getElementById('interact-btn-mobile');
+  if(talk&&talk.dataset.bound!=='1'){
+    talk.dataset.bound='1';
+    talk.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();resetMovement();pauseEncounters(800);interact();},{passive:false});
+    talk.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();resetMovement();pauseEncounters(800);interact();},{passive:false});
+    talk.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();},{passive:false});
+  }
+
+  ['pointerup','pointercancel','touchend','touchcancel','blur'].forEach(ev=>window.addEventListener(ev,()=>resetMovement(),{passive:true}));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)resetMovement();});
+}
+
+// ==================== INIT PATCH ====================
+// INIT
+function init(){
+  generateMap();initCanvas();
+  const loaded=loadGame();
+  if(loaded){
+    if(G.yui.x<1)G.yui.x=4;if(G.yui.y<1)G.yui.y=4;
+    addLog('Save loaded! Welcome back, Yui.','save');
+    if(G.lastSaveTime)updateLastSaveTime();
+    showPopup('GAME LOADED','Welcome back, Yui!<br>Level <span style="color:var(--accent)">'+G.yui.level+'</span> \u2014 <span style="color:var(--gold)">'+G.yui.gold+'G</span><br><br>Continue your quest!',
+      [{label:'Play!',fn:closePopup,confirm:true},{label:'New Game',fn:()=>{if(confirm('Start fresh? This will overwrite your save!')){localStorage.removeItem(SAVE_KEY);location.reload();}else closePopup();}}]);
+  } else {
+    showPopup('WELCOME','<span style="color:var(--accent)">YUI</span> \u2014 Quest for Code<br><br>Explore, fight bugs, level up!<br>Visit \u{1F6D2} Shop for gear.<br>Talk to \u{1F9D9} NPCs for hints!<br><br><span style="color:var(--save)">\u{1F4BE} Save often!</span>',
+      [{label:'Begin!',fn:closePopup,confirm:true}]);
+  }
+  updateUI();renderStatChart();requestAnimationFrame(gameLoop);
+
+  // Show touch controls on touch devices OR narrow screens
+  const isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
+  const isNarrow=window.matchMedia('(max-width:760px)').matches;
+  if(isTouch||isNarrow){
+    document.getElementById('joystick-wrap').style.display='block';
+    document.getElementById('interact-btn-mobile').style.display='flex';
+  }
+  setupMobileControls();
+
+  // Re-check on resize
+  window.addEventListener('resize',()=>{
+    const narrow=window.matchMedia('(max-width:760px)').matches;
+    const show=isTouch||narrow;
+    document.getElementById('joystick-wrap').style.display=show?'block':'none';
+    document.getElementById('interact-btn-mobile').style.display=show?'flex':'none';
+  });
+
+  setTimeout(()=>{currentWeather='rain';addLog('Rain begins in the digital wilds...','system');setTimeout(()=>{currentWeather='clear';addLog('The rain has stopped.','system');},60000);},40000);
+}
+window.addEventListener('load',init);
+
+
+// === Mobile overlay escape / stuck-screen fixes ===
+(function(){
+  function isMobileLayout(){ return window.matchMedia && window.matchMedia('(max-width: 760px)').matches; }
+
+  function syncMobileModeClasses(){
+    document.body.classList.toggle('in-shop', G.mode === 'shop');
+    document.body.classList.toggle('in-battle', G.mode === 'battle');
+    document.body.classList.toggle('in-world', G.mode === 'world');
+  }
+
+  function ensureMobileShopLeave(){
+    if(document.getElementById('mobile-shop-leave')) return;
+    const btn=document.createElement('button');
+    btn.id='mobile-shop-leave';
+    btn.type='button';
+    btn.textContent='✕ Leave Shop';
+    btn.setAttribute('aria-label','Leave shop');
+    const leave=function(ev){
+      if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+      if(G.mode === 'shop') closeShop();
+    };
+    btn.addEventListener('click', leave, {passive:false});
+    btn.addEventListener('touchstart', leave, {passive:false});
+    btn.addEventListener('pointerdown', leave);
+    const shop=document.getElementById('shop-screen');
+    if(shop) shop.appendChild(btn);
+  }
+
+  function safeCloseOverlay(){
+    if(G.mode === 'shop'){ closeShop(); return true; }
+    if(document.getElementById('mobile-drawer')?.classList.contains('open')){ closeMobilePanel(); return true; }
+    if(document.getElementById('npc-dialogue')?.classList.contains('active')){ closeNPCDialogue(); return true; }
+    if(document.getElementById('popup-overlay')?.classList.contains('active')){ closePopup(); return true; }
+    return false;
+  }
+
+  // Patch open/close so mobile never gets trapped behind a hidden button.
+  const prevOpenShop = window.openShop || openShop;
+  window.openShop = openShop = function(){
+    if(G.mode === 'battle') return;
+    if(typeof closeMobilePanel === 'function') closeMobilePanel();
+    ensureMobileShopLeave();
+    prevOpenShop.apply(this, arguments);
+    syncMobileModeClasses();
+    const closeBtn=document.getElementById('shop-close');
+    if(closeBtn){
+      closeBtn.style.visibility='visible';
+      closeBtn.style.display='flex';
+      closeBtn.style.pointerEvents='auto';
+    }
+  };
+
+  const prevCloseShop = window.closeShop || closeShop;
+  window.closeShop = closeShop = function(){
+    prevCloseShop.apply(this, arguments);
+    syncMobileModeClasses();
+    const leave=document.getElementById('mobile-shop-leave');
+    if(leave) leave.blur();
+  };
+
+  // Make every close-ish control respond to modern phone events too.
+  window.addEventListener('DOMContentLoaded', function(){
+    ensureMobileShopLeave();
+    syncMobileModeClasses();
+    const shopClose=document.getElementById('shop-close');
+    if(shopClose){
+      const handler=function(ev){
+        if(G.mode === 'shop'){ ev.preventDefault(); ev.stopPropagation(); closeShop(); }
+      };
+      shopClose.addEventListener('touchstart', handler, {passive:false});
+      shopClose.addEventListener('pointerdown', handler);
+    }
+  });
+
+  // Escape key for desktop testing and Android hardware keyboards.
+  window.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && safeCloseOverlay()){ e.preventDefault(); }
+  }, true);
+
+  // Optional browser-back support on mobile: pressing Back while in shop closes shop first.
+  window.addEventListener('popstate', function(){
+    if(isMobileLayout() && safeCloseOverlay()){
+      try{ history.pushState({yuiRpg:true}, ''); }catch(e){}
+    }
+  });
+  try{ if(isMobileLayout()) history.replaceState({yuiRpg:true}, ''); }catch(e){}
+
+  // Keep classes honest after battle transitions too.
+  const prevStartBattle = window.startBattle || startBattle;
+  if(typeof prevStartBattle === 'function'){
+    window.startBattle = startBattle = function(){
+      prevStartBattle.apply(this, arguments);
+      syncMobileModeClasses();
+    };
+  }
+  ['victorySeq','defeatSeq'].forEach(function(name){
+    const fn=window[name];
+    if(typeof fn === 'function'){
+      window[name]=function(){
+        const result=fn.apply(this, arguments);
+        setTimeout(syncMobileModeClasses, 50);
+        return result;
+      };
+    }
+  });
+})();
+
+// === Final mobile battle/D-pad reliability patch ===
+(function(){
+  function isMobileLike(){
+    return (window.matchMedia && window.matchMedia('(max-width:760px)').matches) ||
+      ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+  }
+
+  function syncGameUiState(){
+    document.body.classList.toggle('in-shop', G.mode === 'shop');
+    document.body.classList.toggle('in-battle', G.mode === 'battle');
+    document.body.classList.toggle('in-world', G.mode === 'world');
+
+    const showWorldControls = isMobileLike() && G.mode === 'world';
+    const joy = document.getElementById('joystick-wrap');
+    const talk = document.getElementById('interact-btn-mobile');
+    if(joy) joy.style.display = showWorldControls ? 'block' : 'none';
+    if(talk) talk.style.display = showWorldControls ? 'flex' : 'none';
+  }
+  window.syncGameUiState = syncGameUiState;
+
+  function wrapFunction(name, after){
+    const old = window[name];
+    if(typeof old !== 'function' || old.__mobileWrapped) return;
+    const wrapped = function(){
+      const result = old.apply(this, arguments);
+      after.apply(this, arguments);
+      return result;
+    };
+    wrapped.__mobileWrapped = true;
+    window[name] = wrapped;
+    try{ eval(name + ' = window[name]'); }catch(_e){}
+  }
+
+  wrapFunction('startBattle', function(){ setTimeout(syncGameUiState, 0); });
+  wrapFunction('endBattle', function(){ setTimeout(syncGameUiState, 0); });
+  wrapFunction('openShop', function(){ setTimeout(syncGameUiState, 0); });
+  wrapFunction('closeShop', function(){ setTimeout(syncGameUiState, 0); });
+  wrapFunction('closePopup', function(){ setTimeout(syncGameUiState, 0); });
+
+  function bindBattleButtons(){
+    const map = {
+      'btn-attack':'attack',
+      'btn-skill':'skill',
+      'btn-item':'item',
+      'btn-run':'run'
+    };
+    Object.keys(map).forEach(function(id){
+      const btn = document.getElementById(id);
+      if(!btn || btn.dataset.mobileBattleBound === '1') return;
+      btn.dataset.mobileBattleBound = '1';
+      btn.type = 'button';
+      btn.style.pointerEvents = 'auto';
+      btn.style.touchAction = 'manipulation';
+
+      let lastFire = 0;
+      const fire = function(ev){
+        if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+        const now = performance.now();
+        if(now - lastFire < 250) return;
+        lastFire = now;
+        if(G.mode !== 'battle' || btn.disabled) return;
+        battleAction(map[id]);
+      };
+      btn.addEventListener('pointerup', fire, {passive:false});
+      btn.addEventListener('touchend', fire, {passive:false});
+      btn.addEventListener('click', fire, {passive:false});
+    });
+  }
+
+  function bindDpadAgain(){
+    const dirDelta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+    document.querySelectorAll('#dpad .dpad-btn[data-dir]').forEach(function(btn){
+      if(btn.dataset.finalDpadBound === '1') return;
+      btn.dataset.finalDpadBound = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.style.touchAction = 'none';
+      const dir=btn.dataset.dir;
+      let last=0;
+      const go=function(ev){
+        if(ev){ev.preventDefault();ev.stopPropagation();}
+        if(G.mode !== 'world') return;
+        const now=performance.now();
+        if(now-last < 130) return;
+        last=now;
+        dpadPress(dir);
+        syncGameUiState();
+      };
+      const stop=function(ev){
+        if(ev){ev.preventDefault();ev.stopPropagation();}
+        dpadRelease();
+      };
+      btn.addEventListener('pointerdown', go, {passive:false});
+      btn.addEventListener('mousedown', go, {passive:false});
+      btn.addEventListener('touchstart', go, {passive:false});
+      btn.addEventListener('pointerup', stop, {passive:false});
+      btn.addEventListener('mouseup', stop, {passive:false});
+      btn.addEventListener('touchend', stop, {passive:false});
+    });
+  }
+
+  window.addEventListener('load', function(){
+    bindBattleButtons();
+    bindDpadAgain();
+    syncGameUiState();
+    setTimeout(syncGameUiState, 200);
+  });
+  window.addEventListener('resize', function(){ setTimeout(syncGameUiState, 0); });
+  window.addEventListener('orientationchange', function(){ setTimeout(syncGameUiState, 150); });
+})();
+
+
+
+// === FINAL ALL-IN-ONE MOBILE SHOP + INPUT FIX ===
+(function(){
+  function mobileLike(){
+    return (window.matchMedia && window.matchMedia('(max-width:760px)').matches) ||
+      ('ontouchstart' in window) || ((navigator.maxTouchPoints || 0) > 0);
+  }
+
+  function setModeClasses(){
+    document.body.classList.toggle('in-world', G.mode === 'world');
+    document.body.classList.toggle('in-shop', G.mode === 'shop');
+    document.body.classList.toggle('in-battle', G.mode === 'battle');
+  }
+
+  function syncFinalMobileUi(){
+    setModeClasses();
+    var showWorld = mobileLike() && G.mode === 'world';
+    var joy = document.getElementById('joystick-wrap');
+    var talk = document.getElementById('interact-btn-mobile');
+    var hud = document.getElementById('mobile-hud');
+    if(joy) joy.style.display = showWorld ? 'block' : 'none';
+    if(talk) talk.style.display = showWorld ? 'flex' : 'none';
+    if(hud) hud.style.display = (mobileLike() && G.mode !== 'battle' && G.mode !== 'shop') ? 'flex' : 'none';
+
+    var leave = document.getElementById('mobile-shop-leave');
+    if(leave) leave.style.display = (mobileLike() && G.mode === 'shop') ? 'flex' : 'none';
+    var close = document.getElementById('shop-close');
+    if(close && G.mode === 'shop'){
+      close.style.display='flex';
+      close.style.visibility='visible';
+      close.style.opacity='1';
+      close.style.pointerEvents='auto';
+    }
+  }
+  window.syncFinalMobileUi = syncFinalMobileUi;
+
+  function ensureLeaveButton(){
+    var old = document.getElementById('mobile-shop-leave');
+    if(!old){
+      old = document.createElement('button');
+      old.id = 'mobile-shop-leave';
+      old.type = 'button';
+      old.textContent = '✕ Leave Shop';
+      old.setAttribute('aria-label','Leave shop');
+      var shop = document.getElementById('shop-screen');
+      if(shop) shop.appendChild(old);
+    }
+    if(old.dataset.finalBound !== '1'){
+      old.dataset.finalBound = '1';
+      var leave = function(ev){
+        if(ev){ev.preventDefault();ev.stopPropagation();}
+        if(G.mode === 'shop') closeShop();
+      };
+      old.addEventListener('pointerdown', leave, {passive:false});
+      old.addEventListener('touchstart', leave, {passive:false});
+      old.addEventListener('click', leave, {passive:false});
+    }
+  }
+
+  function bindShopClose(){
+    var close = document.getElementById('shop-close');
+    if(!close || close.dataset.finalCloseBound === '1') return;
+    close.dataset.finalCloseBound = '1';
+    close.type = 'button';
+    var leave = function(ev){
+      if(ev){ev.preventDefault();ev.stopPropagation();}
+      if(G.mode === 'shop') closeShop();
+    };
+    close.addEventListener('pointerdown', leave, {passive:false});
+    close.addEventListener('touchstart', leave, {passive:false});
+    close.addEventListener('click', leave, {passive:false});
+  }
+
+  function bindBattleButtonsFinal(){
+    var map={
+      'btn-attack':'attack',
+      'btn-skill':'skill',
+      'btn-item':'item',
+      'btn-run':'run'
+    };
+    Object.keys(map).forEach(function(id){
+      var btn=document.getElementById(id);
+      if(!btn || btn.dataset.finalBattleBound === '1') return;
+      btn.dataset.finalBattleBound='1';
+      btn.type='button';
+      btn.style.pointerEvents='auto';
+      btn.style.touchAction='manipulation';
+      var last=0;
+      var fire=function(ev){
+        if(ev){ev.preventDefault();ev.stopPropagation();}
+        var now=performance.now();
+        if(now-last<220) return;
+        last=now;
+        if(G.mode === 'battle' && !btn.disabled) battleAction(map[id]);
+      };
+      btn.addEventListener('pointerup', fire, {passive:false});
+      btn.addEventListener('touchend', fire, {passive:false});
+      btn.addEventListener('click', fire, {passive:false});
+    });
+  }
+
+  function wrap(name){
+    var fn = window[name] || (typeof globalThis[name] === 'function' ? globalThis[name] : null);
+    if(typeof fn !== 'function' || fn.__finalMobileWrapped) return;
+    var wrapped=function(){
+      var result = fn.apply(this, arguments);
+      setTimeout(function(){ ensureLeaveButton(); bindShopClose(); bindBattleButtonsFinal(); syncFinalMobileUi(); }, 0);
+      return result;
+    };
+    wrapped.__finalMobileWrapped=true;
+    window[name]=wrapped;
+    try{ eval(name + ' = window[name]'); }catch(e){}
+  }
+
+  ['openShop','closeShop','startBattle','endBattle','closePopup','openMobilePanel','closeMobilePanel'].forEach(wrap);
+
+  window.addEventListener('load', function(){
+    ensureLeaveButton();
+    bindShopClose();
+    bindBattleButtonsFinal();
+    syncFinalMobileUi();
+    setTimeout(syncFinalMobileUi, 150);
+  });
+  window.addEventListener('resize', function(){ setTimeout(syncFinalMobileUi, 0); });
+  window.addEventListener('orientationchange', function(){ setTimeout(syncFinalMobileUi, 150); });
+
+  window.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && G.mode === 'shop'){ e.preventDefault(); closeShop(); }
+  }, true);
+})();
+
+</script>
+</body>
+</html>
