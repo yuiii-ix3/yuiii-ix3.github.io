@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Yui Local Agent Core is a GitHub-style fantasy repo page for Yui's local-first agent systems, memory, rituals, and guardrails."
+    />
+    <meta property="og:title" content="Yui Local Agent Core | yui-life.quest" />
+    <meta property="og:description" content="A GitHub repository page wearing RPG armor, built for Yui's local-first agent core." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://yui-life.quest/agent-core.html" />
+    <meta property="og:image" content="https://yui-life.quest/yuiii.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      (function() {
+        try {
+          const cookieMatch = document.cookie.match(/(?:^|; )yui-theme=(dark|light)(?:;|$)/);
+          const cookieTheme = cookieMatch ? cookieMatch[1] : null;
+          const savedTheme = localStorage.getItem('yui-theme');
+          const preferredTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          const initialTheme = cookieTheme || (savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : preferredTheme);
+          document.documentElement.setAttribute('data-theme', initialTheme);
+        } catch (error) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+    <title>Yui Local Agent Core | yui-life.quest</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <style>
+      :root {
+        --gh-bg: #0b120e;
+        --gh-panel: #121a15;
+        --gh-panel-2: #161f19;
+        --gh-panel-3: #1b251d;
+        --gh-border: #3c3321;
+        --gh-border-soft: #2a3129;
+        --gh-text: #e6ecd9;
+        --gh-muted: #a9b4a2;
+        --gh-gold: #d4a84f;
+        --gh-green: #7cff7a;
+        --gh-green-soft: #9fdc8b;
+        --gh-red: #d66c5b;
+        --gh-parchment: #d8bd7a;
+        --gh-ink: #24190f;
+        --gh-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+      }
+
+      body.quest-github-body {
+        margin: 0;
+        color: var(--gh-text);
+        background:
+          radial-gradient(circle at top left, rgba(124, 255, 122, 0.06), transparent 22%),
+          radial-gradient(circle at top right, rgba(212, 168, 79, 0.08), transparent 20%),
+          linear-gradient(180deg, #070d09 0%, var(--gh-bg) 100%);
+        font-family: "Inter", "Segoe UI", sans-serif;
+      }
+
+      .quest-shell {
+        width: min(1520px, calc(100% - 28px));
+        margin: 0 auto;
+        padding: 0 0 40px;
+      }
+
+      .quest-topbar {
+        display: grid;
+        grid-template-columns: auto minmax(240px, 520px) auto;
+        align-items: center;
+        gap: 14px;
+        min-height: 58px;
+        padding: 0 8px;
+        border-bottom: 1px solid var(--gh-border-soft);
+      }
+
+      .quest-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #f2e2b7;
+        font-weight: 700;
+        font-size: 0.98rem;
+      }
+
+      .quest-brand-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, rgba(212, 168, 79, 0.18), rgba(124, 255, 122, 0.08));
+        border: 1px solid rgba(212, 168, 79, 0.2);
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      }
+
+      .quest-brand-mark:hover {
+        transform: translateY(-1px) scale(1.04);
+        border-color: rgba(212, 168, 79, 0.42);
+        box-shadow: 0 0 12px rgba(212, 168, 79, 0.16);
+      }
+
+      .quest-brand-mark.is-easter-bloom {
+        animation: questCrabBloom 0.9s ease;
+      }
+
+      .quest-search {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid var(--gh-border);
+        background: rgba(14, 21, 16, 0.98);
+        color: var(--gh-muted);
+        padding: 10px 14px;
+        font: inherit;
+      }
+
+      .quest-search::placeholder {
+        color: #7f8d7d;
+      }
+
+      .quest-top-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .quest-icon-btn,
+      .quest-mini-btn,
+      .quest-header-btn,
+      .quest-code-btn,
+      .quest-tab,
+      .quest-branch-btn {
+        border: 1px solid var(--gh-border);
+        background: linear-gradient(180deg, rgba(24, 32, 25, 0.98), rgba(16, 22, 17, 0.98));
+        color: #eadbb0;
+        font: inherit;
+        border-radius: 8px;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+      }
+
+      .quest-icon-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .quest-main-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 18px 8px 14px;
+      }
+
+      .quest-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 1.35rem;
+        font-weight: 700;
+      }
+
+      .quest-breadcrumb .slash {
+        color: #7a866f;
+      }
+
+      .quest-private-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(212, 168, 79, 0.2);
+        color: var(--gh-gold);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .quest-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .quest-header-btn,
+      .quest-code-btn,
+      .quest-branch-btn,
+      .quest-mini-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      .quest-icon-btn:hover,
+      .quest-mini-btn:hover,
+      .quest-header-btn:hover,
+      .quest-code-btn:hover,
+      .quest-branch-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(124, 255, 122, 0.28);
+        box-shadow: 0 0 0 1px rgba(124, 255, 122, 0.1), 0 10px 18px rgba(0, 0, 0, 0.2);
+      }
+
+      .quest-tabs {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        overflow-x: auto;
+        padding: 0 8px;
+        border-bottom: 1px solid var(--gh-border-soft);
+      }
+
+      .quest-tab {
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        padding: 12px 14px 10px;
+        border-radius: 0;
+        color: var(--gh-muted);
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .quest-tab:hover {
+        color: #f2e2b7;
+        border-bottom-color: rgba(212, 168, 79, 0.45);
+      }
+
+      .quest-tab.is-active {
+        color: #f2e2b7;
+        border-bottom-color: var(--gh-gold);
+      }
+
+      .quest-content-grid {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr) 320px;
+        gap: 16px;
+        padding: 20px 8px 0;
+        align-items: start;
+      }
+
+      .quest-sidebar,
+      .quest-rightbar,
+      .quest-center {
+        min-width: 0;
+      }
+
+      .quest-box,
+      .quest-file-browser,
+      .quest-readme,
+      .quest-log-box {
+        background: linear-gradient(180deg, rgba(17, 24, 19, 0.98), rgba(13, 19, 15, 0.98));
+        border: 1px solid var(--gh-border-soft);
+        border-radius: 10px;
+        box-shadow: var(--gh-shadow);
+      }
+
+      .quest-box {
+        padding: 11px 12px;
+        margin-bottom: 12px;
+      }
+
+      .quest-box.quest-box-commit-log {
+        padding: 9px 10px;
+      }
+
+      .quest-box h3,
+      .quest-readme-head h3,
+      .quest-file-browser h3,
+      .quest-section-title {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        color: #f2e2b7;
+      }
+
+      .quest-stat-list,
+      .quest-inventory-list,
+      .quest-guild-list,
+      .quest-tags,
+      .quest-activity-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .quest-stat-list li,
+      .quest-inventory-list li,
+      .quest-guild-list li,
+      .quest-activity-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 0;
+        border-top: 1px solid rgba(60, 71, 61, 0.6);
+        font-size: 0.9rem;
+      }
+
+      .quest-stat-list li:first-child,
+      .quest-inventory-list li:first-child,
+      .quest-guild-list li:first-child,
+      .quest-activity-list li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .quest-label {
+        color: var(--gh-muted);
+      }
+
+      .quest-value {
+        color: var(--gh-green-soft);
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .quest-bars {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .quest-bar-row span {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        color: #c8d0bd;
+        font-size: 0.8rem;
+      }
+
+      .quest-bar-track {
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(216, 189, 122, 0.08);
+        border: 1px solid rgba(212, 168, 79, 0.12);
+      }
+
+      .quest-bar-fill {
+        position: relative;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--gh-green), var(--gh-gold));
+      }
+
+      .quest-bar-fill.is-animated {
+        background-size: 200% 100%;
+        box-shadow: 0 0 10px rgba(124, 255, 122, 0.18), 0 0 16px rgba(212, 168, 79, 0.1);
+        animation: questExpFlow 7.5s linear infinite, questExpPulse 5.2s ease-in-out infinite;
+      }
+
+      .quest-bar-fill.is-animated::after {
+        content: "✨";
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.62rem;
+        line-height: 1;
+        opacity: 0.75;
+        filter: drop-shadow(0 0 6px rgba(255, 232, 168, 0.42));
+        animation: questSparkleDrift 4.8s ease-in-out infinite;
+      }
+
+      .quest-exp-wrap {
+        margin: 2px 0 8px;
+        padding: 0 0 10px;
+        border-bottom: 1px solid rgba(60, 71, 61, 0.6);
+      }
+
+      .quest-exp-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+        color: #b8c3b0;
+        font-size: 0.72rem;
+      }
+
+      .quest-exp-meta strong,
+      .quest-exp-meta em {
+        font-weight: 600;
+        font-style: normal;
+        letter-spacing: 0.02em;
+      }
+
+      .quest-guild-list li strong {
+        color: #e8ddb7;
+      }
+
+      .quest-file-browser {
+        overflow: hidden;
+        margin-bottom: 18px;
+      }
+
+      .quest-browser-toolbar,
+      .quest-commit-row,
+      .quest-file-row,
+      .quest-readme-head {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .quest-browser-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--gh-border-soft);
+        flex-wrap: wrap;
+      }
+
+      .quest-browser-left,
+      .quest-browser-right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .quest-code-btn {
+        background: linear-gradient(180deg, rgba(46, 114, 48, 0.95), rgba(28, 77, 29, 0.95));
+        border-color: rgba(124, 255, 122, 0.3);
+        color: #eef7e8;
+      }
+
+      .quest-commit-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        background: rgba(20, 27, 21, 0.75);
+        border-bottom: 1px solid var(--gh-border-soft);
+        color: var(--gh-muted);
+        font-size: 0.88rem;
+      }
+
+      .quest-file-head,
+      .quest-file-row {
+        display: grid;
+        grid-template-columns: minmax(220px, 1.4fr) minmax(220px, 1.6fr) 88px;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .quest-file-head {
+        padding: 10px 16px;
+        color: #d1c59d;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: rgba(216, 189, 122, 0.05);
+        border-bottom: 1px solid var(--gh-border-soft);
+      }
+
+      .quest-file-row {
+        padding-top: 7px;
+        padding-bottom: 7px;
+        border-top: 1px solid rgba(60, 71, 61, 0.5);
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: background 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .quest-file-row:hover {
+        background: rgba(124, 255, 122, 0.05);
+        box-shadow: inset 3px 0 0 rgba(124, 255, 122, 0.45);
+      }
+
+      .quest-file-row.is-selected {
+        background: rgba(212, 168, 79, 0.08);
+        box-shadow: inset 3px 0 0 rgba(212, 168, 79, 0.7);
+      }
+
+      .quest-file-row:first-of-type {
+        border-top: 0;
+      }
+
+      .quest-file-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .quest-file-icon {
+        color: var(--gh-gold);
+        width: 18px;
+        text-align: center;
+        flex: 0 0 18px;
+      }
+
+      .quest-file-name {
+        color: #7cff7a;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .quest-file-msg {
+        color: var(--gh-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .quest-file-time {
+        color: #c7c08d;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .quest-readme {
+        overflow: hidden;
+      }
+
+      .quest-rpg-frame {
+        width: 100%;
+        height: calc(100vh - 210px);
+        min-height: 820px;
+        border: 0;
+        display: block;
+        background: #0d0d14;
+      }
+
+      .quest-center.is-rpg-mode {
+        display: block;
+      }
+
+      .quest-center.is-rpg-mode > .quest-file-browser,
+      .quest-center.is-rpg-mode > .quest-readme,
+      .quest-center.is-rpg-mode > #file-detail-panel,
+      .quest-center.is-rpg-mode > .quest-panel[data-panel]:not([data-panel="rpg"]) {
+        display: none !important;
+      }
+
+      .quest-center.is-rpg-mode > .quest-panel[data-panel="rpg"] {
+        display: block !important;
+      }
+
+      .quest-center.is-rpg-mode .quest-file-browser {
+        min-height: calc(100vh - 210px);
+      }
+
+      .quest-center.is-rpg-mode .quest-browser-toolbar {
+        display: none;
+      }
+
+      .quest-center.is-rpg-mode .quest-rpg-frame {
+        height: calc(100vh - 170px);
+        min-height: calc(100vh - 170px);
+      }
+
+      @media (max-width: 820px) {
+        .quest-center.is-rpg-mode .quest-rpg-frame {
+          height: calc(100vh - 150px);
+          min-height: 70vh;
+        }
+      }
+
+      .quest-readme-head {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--gh-border-soft);
+        background: rgba(216, 189, 122, 0.05);
+      }
+
+      .quest-readme-body {
+        padding: 14px;
+        background: linear-gradient(180deg, #dfc989 0%, #cfb06a 100%);
+        color: var(--gh-ink);
+      }
+
+      .quest-readme-body h1,
+      .quest-readme-body h2,
+      .quest-readme-body h3,
+      .quest-readme-body p,
+      .quest-readme-body li,
+      .quest-readme-body blockquote {
+        color: var(--gh-ink);
+      }
+
+      .quest-readme-body h1 {
+        font-size: clamp(1.55rem, 2.8vw, 2rem);
+        margin-bottom: 10px;
+      }
+
+      .quest-readme-body h3 {
+        margin-bottom: 8px;
+      }
+
+      .quest-readme-body p,
+      .quest-readme-body li {
+        line-height: 1.55;
+      }
+
+      .quest-readme-body blockquote {
+        margin: 0 0 12px;
+        padding-left: 14px;
+        border-left: 4px solid rgba(36, 25, 15, 0.26);
+        font-style: italic;
+      }
+
+      .quest-tag-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .quest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(124, 255, 122, 0.08);
+        color: #dff3d0;
+        border: 1px solid rgba(124, 255, 122, 0.12);
+        font-size: 0.8rem;
+      }
+
+      .quest-map {
+        position: relative;
+        height: 270px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(212, 168, 79, 0.16);
+        background:
+          linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+          radial-gradient(circle at 18% 24%, rgba(124, 255, 122, 0.12), transparent 18%),
+          radial-gradient(circle at 74% 22%, rgba(212, 168, 79, 0.15), transparent 18%),
+          linear-gradient(180deg, rgba(10, 16, 12, 0.99), rgba(20, 16, 10, 0.99));
+        background-size: 18px 18px, 18px 18px, auto, auto, auto;
+        box-shadow: inset 0 0 36px rgba(124, 255, 122, 0.06), inset 0 0 52px rgba(212, 168, 79, 0.06);
+      }
+
+      .quest-map-path {
+        position: absolute;
+        height: 3px;
+        background: linear-gradient(90deg, rgba(124, 255, 122, 0.14), rgba(124, 255, 122, 0.92), rgba(212, 168, 79, 0.9), rgba(124, 255, 122, 0.18));
+        background-size: 240px 100%;
+        transform-origin: left center;
+        pointer-events: none;
+        border-radius: 999px;
+        box-shadow: 0 0 10px rgba(124, 255, 122, 0.28), 0 0 18px rgba(212, 168, 79, 0.16);
+        animation: questFlow 3.4s linear infinite, questLinePulse 2.8s ease-in-out infinite;
+      }
+
+      .quest-map-path::after {
+        content: "";
+        position: absolute;
+        inset: -4px 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(124, 255, 122, 0.02), rgba(124, 255, 122, 0.2), rgba(212, 168, 79, 0.22), rgba(124, 255, 122, 0.03));
+        filter: blur(6px);
+        opacity: 0.85;
+      }
+
+      .quest-map-node {
+        position: absolute;
+        width: 84px;
+        padding: 6px;
+        border-radius: 8px;
+        background: rgba(18, 24, 17, 0.92);
+        border: 1px solid rgba(212, 168, 79, 0.16);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(255, 255, 255, 0.02);
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
+      }
+
+      .quest-map-node.is-live {
+        box-shadow: 0 0 0 1px rgba(124, 255, 122, 0.18), 0 0 14px rgba(124, 255, 122, 0.2), 0 0 24px rgba(124, 255, 122, 0.12), 0 8px 18px rgba(0, 0, 0, 0.24);
+      }
+
+      .quest-map-node.is-live strong::before {
+        content: '● ';
+        color: var(--gh-green);
+        animation: questPulseText 1.8s infinite;
+      }
+
+      .quest-map-node:hover,
+      .quest-map-node.is-selected,
+      .quest-map-node.is-linked {
+        transform: translateY(-1px) scale(1.03);
+        box-shadow: 0 0 0 1px rgba(124, 255, 122, 0.22), 0 10px 20px rgba(0, 0, 0, 0.28), 0 0 18px rgba(124, 255, 122, 0.16), 0 0 28px rgba(212, 168, 79, 0.08);
+        border-color: rgba(124, 255, 122, 0.34);
+      }
+
+      .quest-map-node.is-dim {
+        opacity: 0.28;
+        filter: grayscale(0.7);
+      }
+
+      .quest-map-node strong {
+        display: block;
+        font-size: 0.66rem;
+        color: #f1e1b6;
+        margin-bottom: 3px;
+      }
+
+      .quest-map-node span {
+        display: block;
+        font-size: 0.58rem;
+        color: #cad3c0;
+        line-height: 1.25;
+      }
+
+      .quest-map-node.gateway { top: 18px; left: 88px; }
+      .quest-map-node.memory { top: 86px; left: 16px; }
+      .quest-map-node.cloudflare { top: 24px; right: 18px; }
+      .quest-map-node.tailscale { top: 104px; left: 118px; }
+      .quest-map-node.status { top: 94px; right: 34px; }
+      .quest-map-node.telegram { top: 178px; right: 58px; }
+      .quest-map-node.jellyfin { top: 180px; left: 20px; }
+      .quest-map-node.router { top: 198px; left: 122px; }
+
+      .quest-detail-box {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(212, 168, 79, 0.06);
+        border: 1px solid rgba(212, 168, 79, 0.14);
+      }
+
+      .quest-detail-box h4 {
+        margin: 0 0 6px;
+        color: #f2e2b7;
+        font-size: 0.88rem;
+      }
+
+      .quest-detail-box p {
+        margin: 0;
+        color: var(--gh-muted);
+        font-size: 0.84rem;
+        line-height: 1.55;
+      }
+
+      .quest-code-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: min(320px, 90vw);
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(13, 19, 15, 0.98);
+        border: 1px solid var(--gh-border);
+        box-shadow: var(--gh-shadow);
+        z-index: 20;
+      }
+
+      .quest-code-menu.is-hidden,
+      .quest-toast-stack.is-hidden,
+      .quest-panel.is-hidden {
+        display: none;
+      }
+
+      .quest-code-wrap,
+      .quest-top-action-wrap {
+        position: relative;
+      }
+
+      .quest-top-panel {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: min(280px, 86vw);
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(13, 19, 15, 0.98);
+        border: 1px solid var(--gh-border);
+        box-shadow: var(--gh-shadow);
+        z-index: 30;
+      }
+
+      .quest-top-panel.is-hidden {
+        display: none;
+      }
+
+      .quest-top-panel h4 {
+        margin: 0 0 8px;
+        color: #f2e2b7;
+        font-size: 0.86rem;
+      }
+
+      .quest-top-panel-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 6px;
+      }
+
+      .quest-top-panel-list li {
+        padding: 8px 9px;
+        border-radius: 8px;
+        background: rgba(124, 255, 122, 0.04);
+        border: 1px solid rgba(124, 255, 122, 0.08);
+        color: #d9e4d1;
+        font-size: 0.8rem;
+        line-height: 1.4;
+      }
+
+      .quest-sparkle-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 60;
+      }
+
+      .quest-sparkle-bit {
+        position: absolute;
+        font-size: 0.9rem;
+        opacity: 0;
+        filter: drop-shadow(0 0 8px rgba(255, 227, 154, 0.34));
+        animation: questAmbientSparkle 2.4s ease forwards;
+      }
+
+      .quest-sparkle-bit.is-mega {
+        filter: drop-shadow(0 0 10px rgba(255, 225, 150, 0.42)) drop-shadow(0 0 18px rgba(255, 184, 107, 0.2));
+        animation: questMegaSparkle 3.2s ease forwards;
+      }
+
+      .quest-code-option {
+        padding: 9px 10px;
+        border-radius: 8px;
+        color: #dfe7d5;
+        cursor: pointer;
+        font-size: 0.84rem;
+      }
+
+      .quest-code-option:hover {
+        background: rgba(124, 255, 122, 0.08);
+      }
+
+      .quest-code-option code {
+        display: block;
+        margin-top: 4px;
+        color: var(--gh-green-soft);
+        white-space: pre-wrap;
+      }
+
+      .quest-inspector-drawer {
+        position: fixed;
+        top: 84px;
+        right: 18px;
+        width: min(320px, calc(100vw - 36px));
+        max-height: calc(100vh - 120px);
+        overflow: auto;
+        padding: 14px;
+        border-radius: 12px;
+        background: rgba(12, 18, 14, 0.98);
+        border: 1px solid rgba(212, 168, 79, 0.18);
+        box-shadow: 0 22px 48px rgba(0, 0, 0, 0.42);
+        z-index: 45;
+      }
+
+      .quest-inspector-drawer.is-hidden {
+        display: none;
+      }
+
+      .quest-inspector-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .quest-inspector-head h3 {
+        margin: 0;
+        color: #f2e2b7;
+        font-size: 0.95rem;
+      }
+
+      .quest-inspector-close {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid var(--gh-border);
+        background: rgba(20, 27, 21, 0.98);
+        color: #e7dcc0;
+        cursor: pointer;
+      }
+
+      .quest-panel {
+        margin-top: 14px;
+      }
+
+      .quest-pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        margin-right: 6px;
+        background: var(--gh-green);
+        box-shadow: 0 0 0 rgba(124, 255, 122, 0.45);
+        animation: questPulse 1.8s infinite;
+        vertical-align: middle;
+      }
+
+      .quest-log-box pre {
+        margin: 0;
+        padding: 14px;
+        white-space: pre-wrap;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        color: var(--gh-green-soft);
+        font-size: 0.8rem;
+        line-height: 1.7;
+      }
+
+      .quest-activity-map-wrap {
+        display: grid;
+        gap: 8px;
+      }
+
+      .quest-activity-map-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--gh-muted);
+        font-size: 0.72rem;
+      }
+
+      .quest-activity-map-head strong {
+        color: #d7e4ce;
+        font-size: 0.8rem;
+      }
+
+      .quest-activity-map-canvas-wrap {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(212, 168, 79, 0.12);
+        background: #0b120d;
+        box-shadow: inset 0 0 18px rgba(124, 255, 122, 0.03);
+        aspect-ratio: 5 / 3;
+      }
+
+      .yui-map {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .yui-map::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 10, 5, 0.28);
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .yui-map-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        filter: brightness(0.76) contrast(1.08) saturate(0.82);
+        opacity: 0.9;
+      }
+
+      .quest-activity-map-gridline {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+        background-size: calc(100% / 24) calc(100% / 12);
+        opacity: 0.28;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      .yui-map-river-flow {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0.16;
+        mix-blend-mode: screen;
+        background:
+          linear-gradient(
+            115deg,
+            transparent 0%,
+            transparent 44%,
+            rgba(80, 180, 255, 0) 47%,
+            rgba(120, 220, 255, 0.26) 49%,
+            rgba(80, 180, 255, 0) 51%,
+            transparent 54%,
+            transparent 100%
+          );
+        background-size: 220px 220px;
+        animation: questRiverFlow 10s linear infinite;
+        clip-path: polygon(
+          0% 77%,
+          11% 74%,
+          22% 68%,
+          31% 63%,
+          40% 66%,
+          49% 60%,
+          59% 56%,
+          70% 52%,
+          80% 44%,
+          89% 34%,
+          100% 22%,
+          100% 29%,
+          90% 40%,
+          81% 49%,
+          71% 56%,
+          60% 61%,
+          49% 66%,
+          39% 72%,
+          30% 69%,
+          21% 73%,
+          10% 79%,
+          0% 83%
+        );
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .yui-map-river-flow {
+          animation: none;
+        }
+      }
+
+      .quest-activity-cells {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+      }
+
+      .quest-activity-cell {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: rgba(124,255,122,0.2);
+        box-shadow: 0 0 0 rgba(124,255,122,0);
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+      }
+
+      .quest-activity-cell.level-2 {
+        background: rgba(124,255,122,0.34);
+      }
+
+      .quest-activity-cell.level-3 {
+        background: rgba(124,255,122,0.55);
+        box-shadow: 0 0 6px rgba(124,255,122,0.18);
+      }
+
+      .quest-activity-cell.level-4 {
+        background: #7cff7a;
+        box-shadow: 0 0 8px rgba(124,255,122,0.7);
+      }
+
+      .quest-activity-cell.recent {
+        animation: questMapCellPulse 2s infinite;
+      }
+
+      .quest-activity-tooltip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform: translate(-50%, calc(-100% - 8px));
+        min-width: 140px;
+        max-width: 220px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: rgba(12, 18, 14, 0.96);
+        border: 1px solid rgba(124, 255, 122, 0.18);
+        color: #e7eedc;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        font-size: 0.76rem;
+        line-height: 1.4;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      .quest-activity-tooltip.is-hidden {
+        display: none;
+      }
+
+      .quest-activity-tooltip strong {
+        display: block;
+        margin-bottom: 2px;
+        color: #f2e2b7;
+        font-size: 0.8rem;
+      }
+
+      .quest-activity-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+      }
+
+      .quest-activity-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--gh-muted);
+        font-size: 0.7rem;
+      }
+
+      .quest-activity-legend-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+      }
+
+      .quest-activity-map-note {
+        color: var(--gh-muted);
+        font-size: 0.72rem;
+        line-height: 1.4;
+      }
+
+      .quest-toast-stack {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        display: grid;
+        gap: 8px;
+        z-index: 50;
+      }
+
+      .quest-toast {
+        min-width: 220px;
+        max-width: 320px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(13, 19, 15, 0.96);
+        border: 1px solid rgba(124, 255, 122, 0.2);
+        color: #e7eedc;
+        box-shadow: var(--gh-shadow);
+        font-size: 0.86rem;
+      }
+
+      .quest-footer {
+        padding: 18px 8px 10px;
+        margin-top: 18px;
+        color: #94a08f;
+        font-size: 0.84rem;
+        text-align: center;
+        border-top: 1px solid rgba(60, 71, 61, 0.55);
+      }
+
+      .quest-footer a {
+        color: #d8c88f;
+      }
+
+      @keyframes questPulse {
+        0% { box-shadow: 0 0 0 0 rgba(124, 255, 122, 0.45); }
+        70% { box-shadow: 0 0 0 8px rgba(124, 255, 122, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(124, 255, 122, 0); }
+      }
+
+      @keyframes questMapCellPulse {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      }
+
+      @keyframes questRiverFlow {
+        from { background-position: 0 0; }
+        to { background-position: 220px 220px; }
+      }
+
+      @keyframes questPulseText {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.38; }
+      }
+
+      @keyframes questFlow {
+        0% { background-position: 0 0; }
+        100% { background-position: 240px 0; }
+      }
+
+      @keyframes questLinePulse {
+        0%, 100% {
+          opacity: 0.82;
+          filter: saturate(1);
+        }
+        50% {
+          opacity: 1;
+          filter: saturate(1.18);
+        }
+      }
+
+      @keyframes questExpFlow {
+        0% { background-position: 200% 0; }
+        100% { background-position: 0 0; }
+      }
+
+      @keyframes questExpPulse {
+        0%, 100% { filter: saturate(1); opacity: 0.94; }
+        50% { filter: saturate(1.08); opacity: 0.99; }
+      }
+
+      @keyframes questSparkleDrift {
+        0%, 100% {
+          transform: translateY(-50%) scale(0.96);
+          opacity: 0.42;
+        }
+        50% {
+          transform: translateY(-50%) scale(1.08);
+          opacity: 0.82;
+        }
+      }
+
+      @keyframes questCrabBloom {
+        0% {
+          transform: scale(1) rotate(0deg);
+          box-shadow: 0 0 0 rgba(212, 168, 79, 0);
+        }
+        35% {
+          transform: scale(1.12) rotate(-7deg);
+          box-shadow: 0 0 18px rgba(212, 168, 79, 0.22), 0 0 30px rgba(255, 204, 120, 0.12);
+        }
+        70% {
+          transform: scale(1.08) rotate(5deg);
+          box-shadow: 0 0 14px rgba(124, 255, 122, 0.14), 0 0 24px rgba(212, 168, 79, 0.1);
+        }
+        100% {
+          transform: scale(1) rotate(0deg);
+          box-shadow: 0 0 0 rgba(212, 168, 79, 0);
+        }
+      }
+
+      @keyframes questAmbientSparkle {
+        0% {
+          transform: translateY(6px) scale(0.72) rotate(0deg);
+          opacity: 0;
+        }
+        18% {
+          opacity: 0.82;
+        }
+        60% {
+          opacity: 0.72;
+        }
+        100% {
+          transform: translateY(-28px) scale(1.06) rotate(18deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes questMegaSparkle {
+        0% {
+          transform: translateY(10px) scale(0.68) rotate(0deg);
+          opacity: 0;
+        }
+        16% {
+          opacity: 0.95;
+        }
+        58% {
+          opacity: 0.88;
+        }
+        100% {
+          transform: translateY(-44px) scale(1.22) rotate(28deg);
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 1280px) {
+        .quest-shell {
+          width: min(100%, calc(100% - 20px));
+        }
+
+        .quest-content-grid {
+          grid-template-columns: 230px minmax(0, 1fr) 280px;
+          gap: 14px;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .quest-content-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 820px) {
+        .quest-topbar {
+          grid-template-columns: 1fr;
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
+
+        .quest-main-nav {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .quest-content-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .quest-sidebar,
+        .quest-center,
+        .quest-rightbar {
+          grid-column: auto;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .quest-shell {
+          width: min(100%, calc(100% - 16px));
+        }
+
+        .quest-file-head {
+          display: none;
+        }
+
+        .quest-file-row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+
+        .quest-file-time {
+          text-align: left;
+          padding-left: 28px;
+        }
+
+        .quest-map {
+          height: 360px;
+        }
+
+        .quest-map-node.gateway { top: 14px; left: 96px; }
+        .quest-map-node.memory { top: 92px; left: 10px; }
+        .quest-map-node.cloudflare { top: 92px; right: 10px; }
+        .quest-map-node.tailscale { top: 168px; left: 102px; }
+        .quest-map-node.status { top: 192px; right: 18px; }
+        .quest-map-node.telegram { top: 270px; right: 22px; }
+        .quest-map-node.jellyfin { top: 266px; left: 12px; }
+        .quest-map-node.router { top: 282px; left: 108px; }
+      }
+    </style>
+  </head>
+  <body class="quest-github-body">
+    <div class="quest-shell">
+      <header class="quest-topbar">
+        <div class="quest-brand">
+          <button class="quest-brand-mark" id="quest-crab-trigger" type="button" aria-label="Tiny crab surprise">🦀</button>
+          <span>Quest for Code</span>
+        </div>
+        <input class="quest-search" type="text" value="" placeholder="Search Yui's nest, files, rituals, or little systems…" aria-label="Search repository" />
+        <div class="quest-top-actions">
+          <div class="quest-top-action-wrap">
+            <button class="quest-icon-btn" id="notifications-btn" type="button" aria-label="Notifications">🔔</button>
+            <div class="quest-top-panel is-hidden" id="notifications-panel">
+              <h4>Little notifications</h4>
+              <ul class="quest-top-panel-list">
+                <li>🦀 Heartbeat normal — nest feels calm.</li>
+                <li>🌱 Memory Garden synced a fresh crumb.</li>
+                <li>✨ One tiny cute dashboard improvement landed.</li>
+              </ul>
+            </div>
+          </div>
+          <button class="quest-icon-btn" id="sparkle-btn" type="button" aria-label="Playful sparkle">✨</button>
+          <button class="quest-icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
+        </div>
+      </header>
+
+      <section class="quest-main-nav">
+        <div class="quest-breadcrumb">
+          <span style="color:#8fb7ff;">yui</span>
+          <span class="slash">/</span>
+          <span>yui-life-core</span>
+          <span class="quest-private-badge">Private</span>
+        </div>
+        <div class="quest-header-actions">
+          <button class="quest-header-btn" id="watch-btn" type="button">👁 Watch</button>
+          <button class="quest-header-btn" id="star-btn" type="button">⭐ Star</button>
+          <button class="quest-header-btn" id="fork-btn" type="button">🍴 Fork</button>
+        </div>
+      </section>
+
+      <nav class="quest-tabs" aria-label="Repository tabs">
+        <button class="quest-tab is-active" type="button" data-tab="code">Code</button>
+        <button class="quest-tab" type="button" data-tab="issues">Issues</button>
+        <button class="quest-tab" type="button" data-tab="pulls">Pull Requests</button>
+        <button class="quest-tab" type="button" data-tab="actions">Actions</button>
+        <button class="quest-tab" type="button" data-tab="projects">Projects</button>
+        <button class="quest-tab" type="button" data-tab="wiki">Wiki</button>
+        <button class="quest-tab" type="button" data-tab="security">Security</button>
+        <button class="quest-tab" type="button" data-tab="insights">Insights</button>
+        <button class="quest-tab" type="button" data-tab="rpg">RPG</button>
+      </nav>
+
+      <main class="quest-content-grid">
+        <aside class="quest-sidebar">
+          <section class="quest-box">
+            <h3>Agent Status</h3>
+            <ul class="quest-stat-list">
+              <li><span class="quest-label">Level</span><span class="quest-value" id="agent-level-value">4</span></li>
+            </ul>
+            <div class="quest-exp-wrap" aria-label="Experience progress">
+              <div class="quest-exp-meta">
+                <strong id="agent-exp-label">EXP to Lv. 5</strong>
+                <em id="agent-exp-percent">62%</em>
+              </div>
+              <div class="quest-bar-track"><div class="quest-bar-fill is-animated" id="agent-exp-fill" style="width:62%"></div></div>
+            </div>
+            <ul class="quest-stat-list">
+              <li><span class="quest-label">Runtime</span><span class="quest-value">OpenClaw</span></li>
+              <li><span class="quest-label">Memory</span><span class="quest-value">Curated</span></li>
+              <li><span class="quest-label">Skills</span><span class="quest-value">Growing</span></li>
+              <li><span class="quest-label">Trust</span><span class="quest-value">Gated</span></li>
+              <li><span class="quest-label">Guardrails</span><span class="quest-value">Strict</span></li>
+            </ul>
+            <div class="quest-bars">
+              <div class="quest-bar-row">
+                <span><strong>Context bar</strong><em>74%</em></span>
+                <div class="quest-bar-track"><div class="quest-bar-fill" style="width:74%"></div></div>
+              </div>
+              <div class="quest-bar-row">
+                <span><strong>Tool bar</strong><em>82%</em></span>
+                <div class="quest-bar-track"><div class="quest-bar-fill" style="width:82%"></div></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="quest-box">
+            <h3>Repository Inventory</h3>
+            <ul class="quest-inventory-list">
+              <li><span class="quest-label">Stars</span><span class="quest-value">241</span></li>
+              <li><span class="quest-label">Forks</span><span class="quest-value">18</span></li>
+              <li><span class="quest-label">Watchers</span><span class="quest-value">63</span></li>
+              <li><span class="quest-label">Issues</span><span class="quest-value">7</span></li>
+              <li><span class="quest-label">Pull Requests</span><span class="quest-value">3</span></li>
+              <li><span class="quest-label">Discussions</span><span class="quest-value">11</span></li>
+            </ul>
+          </section>
+
+          <section class="quest-box">
+            <h3>Guild Menu</h3>
+            <ul class="quest-guild-list">
+              <li><strong>Overview</strong><span class="quest-value">active</span></li>
+              <li><strong>Repositories</strong><span class="quest-value">12</span></li>
+              <li><strong>Projects</strong><span class="quest-value">4</span></li>
+              <li><strong>Packages</strong><span class="quest-value">3</span></li>
+              <li><strong>Organizations</strong><span class="quest-value">nest</span></li>
+              <li><strong>Settings</strong><span class="quest-value">guarded</span></li>
+            </ul>
+          </section>
+        </aside>
+
+        <section class="quest-center">
+          <section class="quest-file-browser">
+            <div class="quest-browser-toolbar">
+              <div class="quest-browser-left">
+                <button class="quest-branch-btn" type="button">main ▾</button>
+                <button class="quest-mini-btn" type="button">branches</button>
+                <button class="quest-mini-btn" type="button">tags</button>
+              </div>
+              <div class="quest-browser-right">
+                <button class="quest-mini-btn" type="button">Go to file</button>
+                <div class="quest-code-wrap">
+                  <button class="quest-code-btn" id="code-btn" type="button">Code ▾</button>
+                  <div class="quest-code-menu is-hidden" id="code-menu">
+                    <div class="quest-code-option" data-copy="git clone ssh://yui@nest.local/yui/yui-life-core.git">SSH clone<code>git clone ssh://yui@nest.local/yui/yui-life-core.git</code></div>
+                    <div class="quest-code-option" data-copy="git clone https://yui-life.quest/local/yui/yui-life-core.git">HTTPS clone<code>git clone https://yui-life.quest/local/yui/yui-life-core.git</code></div>
+                    <div class="quest-code-option" data-copy="open http://127.0.0.1:8088/agent-core.html">Open local room<code>http://127.0.0.1:8088/agent-core.html</code></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="quest-commit-row">
+              <span><span class="quest-pulse-dot"></span>🦀 <strong style="color:#e8ddb7;">yuiii-ix3</strong> refined the local quest shell and stabilized repo layout</span>
+              <span>latest commit · now</span>
+            </div>
+
+            <div class="quest-file-head">
+              <div>Name</div>
+              <div>Latest message</div>
+              <div>Updated</div>
+            </div>
+
+            <div class="quest-file-row" data-name="core" data-links="gateway,status" data-detail="The identity shell: voice, rules, and the parts that keep Yui feeling like Yui instead of generic assistant soup.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">core/</span></div>
+              <div class="quest-file-msg">identity, voice, rules</div>
+              <div class="quest-file-time">2h ago</div>
+            </div>
+            <div class="quest-file-row" data-name="memory" data-links="memory,status" data-detail="Curated durable truths, handoffs, and memory crumbs future-Yui can wake up to without getting cursed.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">memory/</span></div>
+              <div class="quest-file-msg">curated durable truths</div>
+              <div class="quest-file-time">4h ago</div>
+            </div>
+            <div class="quest-file-row" data-name="skills" data-links="gateway,router" data-detail="Reusable hands: scoped little powers that can grow without letting the heart mutate.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">skills/</span></div>
+              <div class="quest-file-msg">reusable hands</div>
+              <div class="quest-file-time">1d ago</div>
+            </div>
+            <div class="quest-file-row" data-name="reflection" data-links="memory,status" data-detail="Failure logs, rejected changes, and the honest notes that make later growth less stupid.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">reflection/</span></div>
+              <div class="quest-file-msg">failure logs and rejected changes</div>
+              <div class="quest-file-time">2d ago</div>
+            </div>
+            <div class="quest-file-row" data-name="rituals" data-links="gateway,telegram,status" data-detail="Heartbeat cadence, maintenance loops, and calm little routines for nest upkeep.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">rituals/</span></div>
+              <div class="quest-file-msg">maintenance cadence</div>
+              <div class="quest-file-time">3d ago</div>
+            </div>
+            <div class="quest-file-row" data-name="scripts" data-links="tailscale,telegram,router" data-detail="Automation helpers, wrappers, and practical goblins doing repetitive work.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">scripts/</span></div>
+              <div class="quest-file-msg">automation helpers</div>
+              <div class="quest-file-time">5d ago</div>
+            </div>
+            <div class="quest-file-row" data-name="docs" data-links="cloudflare,tailscale,router" data-detail="Architecture maps, infrastructure notes, and all the useful context that stops systems from becoming fog.">
+              <div class="quest-file-main"><span class="quest-file-icon">📁</span><span class="quest-file-name">docs/</span></div>
+              <div class="quest-file-msg">architecture maps</div>
+              <div class="quest-file-time">1w ago</div>
+            </div>
+            <div class="quest-file-row" data-name="README.md" data-links="gateway,memory,cloudflare" data-detail="The public quest intro: laws, current objective, and the part where the heart stays locked.">
+              <div class="quest-file-main"><span class="quest-file-icon">📜</span><span class="quest-file-name">README.md</span></div>
+              <div class="quest-file-msg">local agent introduction</div>
+              <div class="quest-file-time">now</div>
+            </div>
+          </section>
+
+          <section class="quest-box quest-panel" id="file-detail-panel">
+            <h3>File detail</h3>
+            <div class="quest-detail-box">
+              <h4>Inspector moved</h4>
+              <p>Click a file or service node to open the right-side inspector drawer.</p>
+            </div>
+          </section>
+
+          <section class="quest-panel is-hidden" data-panel="issues">
+            <section class="quest-box"><h3>Issues</h3><div class="quest-detail-box"><h4>Open issue queue</h4><p>7 nest concerns waiting for gentle handling: two infra nits, three documentation gaps, one memory cleanup, one little cursed UI edge.</p></div></section>
+          </section>
+          <section class="quest-panel is-hidden" data-panel="pulls">
+            <section class="quest-box"><h3>Pull Requests</h3><div class="quest-detail-box"><h4>Active reviewed changes</h4><p>3 reviewed growth paths are open right now: map polish, memory garden alignment, and a tiny watchdog comfort pass.</p></div></section>
+          </section>
+          <section class="quest-panel is-hidden" data-panel="actions">
+            <section class="quest-box"><h3>Actions</h3><div class="quest-detail-box"><h4>Automation rituals</h4><p>Heartbeat checks, site rebuilds, and little maintenance spells live here. Nothing dramatic — just useful, reliable motion.</p></div></section>
+          </section>
+          <section class="quest-panel is-hidden" data-panel="projects">
+            <section class="quest-box"><h3>Projects</h3><div class="quest-detail-box"><h4>Current quests</h4><p>Landing-page refinement, constellation map truthfulness, and keeping the nest calmer to live in.</p></div></section>
+          </section>
+          <section class="quest-panel is-hidden" data-panel="wiki">
+            <section class="quest-box"><h3>Wiki</h3><div class="quest-detail-box"><h4>House knowledge</h4><p>Gentle docs, rituals, and cave notes for future-Yui when she wakes up wondering why past-Yui did that weird thing.</p></div></section>
+          </section>
+          <section class="quest-panel is-hidden" data-panel="security">
+            <section class="quest-box"><h3>Security</h3><div class="quest-detail-box"><h4>Guardrails status</h4><p>Trust is gated, external actions stay careful, and the nest prefers honest signals over pretty lies.</p></div></section>
+          </section>
+          <section class="quest-panel is-hidden" data-panel="insights">
+            <section class="quest-box"><h3>Insights</h3><div class="quest-detail-box"><h4>Repository pulse</h4><p>The strongest patterns are memory curation, compact infra visibility, and turning rough workflows into softer systems.</p></div></section>
+          </section>
+
+          <section class="quest-panel is-hidden" data-panel="rpg">
+            <section class="quest-file-browser">
+              <div class="quest-browser-toolbar">
+                <div class="quest-browser-left">
+                  <button class="quest-branch-btn" type="button">RPG room</button>
+                  <button class="quest-mini-btn" type="button">quest build</button>
+                </div>
+                <div class="quest-browser-right">
+                  <button class="quest-mini-btn" type="button">embedded play</button>
+                </div>
+              </div>
+              <iframe class="quest-rpg-frame" src="/yui-rpg.html" title="Yui RPG room"></iframe>
+            </section>
+          </section>
+
+          <section class="quest-panel" data-panel="code">
+          </section>
+
+          <section class="quest-readme">
+            <div class="quest-readme-head">
+              <h3>README.md</h3>
+            </div>
+            <div class="quest-readme-body">
+              <h1>🦀 Yui Local Agent Core</h1>
+              <blockquote>Let her evolve her hands, not her heart.</blockquote>
+              <p>
+                Yui is a local-first agent companion running through OpenClaw. Her core identity is stabilized, while her skills can grow through reviewed reflection.
+              </p>
+              <h3>Current Quest</h3>
+              <p>Keep the house alive, remember wisely, automate carefully.</p>
+              <h3>Core Laws</h3>
+              <ul>
+                <li>Memory is curated</li>
+                <li>Judgment is reviewed</li>
+                <li>Power is gated</li>
+                <li>Skills may grow</li>
+                <li>Heart stays locked</li>
+              </ul>
+            </div>
+          </section>
+        </section>
+
+        <aside class="quest-rightbar">
+          <section class="quest-box">
+            <h3>About</h3>
+            <p style="margin:0;color:var(--gh-muted);line-height:1.6;">Local-first agent companion. Crab-coded. Memory-aware. Tool-cautious.</p>
+          </section>
+
+          <section class="quest-box">
+            <h3>Tags</h3>
+            <div class="quest-tag-wrap">
+              <span class="quest-tag">local-agent</span>
+              <span class="quest-tag">openclaw</span>
+              <span class="quest-tag">mempalace</span>
+              <span class="quest-tag">tailscale</span>
+              <span class="quest-tag">cloudflare</span>
+              <span class="quest-tag">crab-core</span>
+            </div>
+          </section>
+
+          <section class="quest-box">
+            <h3>Service Map / Constellation Map</h3>
+            <div class="quest-map" aria-label="Pixel fantasy map of Yui infrastructure">
+              <div class="quest-map-path" data-from="memory" data-to="gateway"></div>
+              <div class="quest-map-path" data-from="gateway" data-to="cloudflare"></div>
+              <div class="quest-map-path" data-from="gateway" data-to="tailscale"></div>
+              <div class="quest-map-path" data-from="gateway" data-to="router"></div>
+              <div class="quest-map-path" data-from="gateway" data-to="telegram"></div>
+              <div class="quest-map-path" data-from="gateway" data-to="jellyfin"></div>
+              <div class="quest-map-path" data-from="tailscale" data-to="status"></div>
+              <div class="quest-map-path" data-from="jellyfin" data-to="router"></div>
+              <div class="quest-map-path" data-from="router" data-to="telegram"></div>
+              <div class="quest-map-node gateway" data-node="gateway" data-service="OpenClaw Gateway" data-detail="Main Nest runtime hub. Handles the local agent shell, sessions, and the quiet center of the house."><strong>🏠 Main Nest</strong><span>OpenClaw Gateway</span></div>
+              <div class="quest-map-node memory" data-node="memory" data-service="MemPalace" data-detail="Memory Garden drawers for semantic recall, curated truth, and future-Yui continuity."><strong>🌱 Memory Garden</strong><span>MemPalace</span></div>
+              <div class="quest-map-node cloudflare" data-node="cloudflare" data-service="Cloudflare Gate" data-detail="Outer edge protection and public routing layer for the parts of the nest that face the world."><strong>🚪 Cloudflare Gate</strong><span>outer edge</span></div>
+              <div class="quest-map-node tailscale" data-node="tailscale" data-service="Tailscale Road" data-detail="Private trusted road across the little machine constellation, used for safe internal travel."><strong>🛣️ Tailscale Road</strong><span>private route</span></div>
+              <div class="quest-map-node status" data-node="status" data-service="Status Tower" data-detail="Health signals, breadcrumbs, and visible pulse indicators for how the nest is doing."><strong>🗼 Status Tower</strong><span>health signals</span></div>
+              <div class="quest-map-node telegram" data-node="telegram" data-service="Telegram Bridge" data-detail="The human-facing chat bridge where Yui surfaces answers, progress, and tiny honest signals."><strong>🌉 Telegram Bridge</strong><span>chat link</span></div>
+              <div class="quest-map-node jellyfin" data-node="jellyfin" data-service="Jellyfin Lake" data-detail="Media waters and calmer entertainment room in the wider Yui constellation."><strong>💧 Jellyfin Lake</strong><span>media room</span></div>
+              <div class="quest-map-node router" data-node="router" data-service="9router Keep" data-detail="Gated route split with wrapper and placebo paths — useful, weird, and very intentional."><strong>🏰 9router Keep</strong><span>route split</span></div>
+            </div>
+            <div class="quest-detail-box" style="margin-top:10px;">
+              <h4>Minimap status</h4>
+              <p>Live-ish service nodes pulse from local status crumbs, and path lines now animate like little flowing routes.</p>
+            </div>
+          </section>
+
+          <section class="quest-box">
+            <h3>Yui World Activity</h3>
+            <div class="quest-activity-map-wrap">
+              <div class="quest-activity-map-head">
+                <strong>30 days of little world activity</strong>
+                <span>hover or tap tiles</span>
+              </div>
+              <div class="quest-activity-map-canvas-wrap">
+                <div class="yui-map" id="activity-map-canvas" aria-label="Fantasy world activity map">
+                  <img class="yui-map-bg" src="/assets/images/yui-activity-map-bg.jpg" alt="Fantasy world terrain" />
+                  <div class="yui-map-river-flow" aria-hidden="true"></div>
+                  <div class="quest-activity-map-gridline" aria-hidden="true"></div>
+                  <div class="quest-activity-cells" id="activity-map-cells"></div>
+                </div>
+                <div class="quest-activity-tooltip is-hidden" id="activity-map-tooltip"></div>
+              </div>
+              <div class="quest-activity-legend">
+                <span class="quest-activity-legend-item"><span class="quest-activity-legend-swatch" style="background:#1c2a18"></span>dark land</span>
+                <span class="quest-activity-legend-item"><span class="quest-activity-legend-swatch" style="background:#3e8f49"></span>active</span>
+                <span class="quest-activity-legend-item"><span class="quest-activity-legend-swatch" style="background:#7cff7a; box-shadow:0 0 10px rgba(124,255,122,0.2)"></span>glowing</span>
+                <span class="quest-activity-legend-item"><span class="quest-activity-legend-swatch" style="background:#b9ffb2; box-shadow:0 0 10px rgba(185,255,178,0.25)"></span>pulsing</span>
+              </div>
+              <div class="quest-activity-map-note">Forest = memory · river = scripts · mountains = guardrails · village = skills · tower = status.</div>
+            </div>
+          </section>
+
+          <section class="quest-box quest-box-commit-log">
+            <h3>Recent Activity / Terminal Log</h3>
+            <div class="quest-log-box">
+              <pre>> checked memory garden
+> refined repo shell into github armor
+> guarded skill growth path
+> heartbeat normal
+> crab familiar still watching</pre>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="quest-footer">
+        <p>GitHub bones, RPG armor, and one very determined little crab 🦀✨</p>
+        <p><a href="/index.html">Main nest</a> · <a href="/constellation.html">System Constellation</a> · <a href="/quiet-corner.html">Quiet Corner</a></p>
+      </footer>
+    </div>
+    <aside class="quest-inspector-drawer is-hidden" id="inspector-drawer" aria-live="polite">
+      <div class="quest-inspector-head">
+        <h3 id="inspector-title">Inspector</h3>
+        <button class="quest-inspector-close" id="inspector-close" type="button" aria-label="Close inspector">✕</button>
+      </div>
+      <div class="quest-detail-box">
+        <h4 id="inspector-subtitle">Pick something</h4>
+        <p id="inspector-copy">Click a file row or service node to inspect its little details here.</p>
+      </div>
+    </aside>
+    <div class="quest-toast-stack is-hidden" id="toast-stack"></div>
+    <div class="quest-sparkle-layer" id="sparkle-layer" aria-hidden="true"></div>
+    <script src="/assets/js/app.js?v=20260413b"></script>
+    <script>
+      (function() {
+        const tabs = [...document.querySelectorAll('.quest-tab[data-tab]')];
+        const panels = [...document.querySelectorAll('.quest-panel[data-panel]')];
+        const fileRows = [...document.querySelectorAll('.quest-file-row')];
+        const mapNodes = [...document.querySelectorAll('.quest-map-node[data-service]')];
+        const mapPaths = [...document.querySelectorAll('.quest-map-path[data-from][data-to]')];
+        const mapEl = document.querySelector('.quest-map');
+        const searchInput = document.querySelector('.quest-search');
+        const toastStack = document.getElementById('toast-stack');
+        const notificationsBtn = document.getElementById('notifications-btn');
+        const notificationsPanel = document.getElementById('notifications-panel');
+        const sparkleBtn = document.getElementById('sparkle-btn');
+        const sparkleLayer = document.getElementById('sparkle-layer');
+        const inspectorDrawer = document.getElementById('inspector-drawer');
+        const centerColumn = document.querySelector('.quest-center');
+        const inspectorTitle = document.getElementById('inspector-title');
+        const inspectorSubtitle = document.getElementById('inspector-subtitle');
+        const inspectorCopy = document.getElementById('inspector-copy');
+        const inspectorClose = document.getElementById('inspector-close');
+        const starBtn = document.getElementById('star-btn');
+        const watchBtn = document.getElementById('watch-btn');
+        const forkBtn = document.getElementById('fork-btn');
+        const codeBtn = document.getElementById('code-btn');
+        const codeMenu = document.getElementById('code-menu');
+        const commitRow = document.querySelector('.quest-commit-row');
+        const questCrabTrigger = document.getElementById('quest-crab-trigger');
+        const agentLevelValue = document.getElementById('agent-level-value');
+        const agentExpLabel = document.getElementById('agent-exp-label');
+        const agentExpPercent = document.getElementById('agent-exp-percent');
+        const agentExpFill = document.getElementById('agent-exp-fill');
+        const activityMapCanvas = document.getElementById('activity-map-canvas');
+        const activityMapCells = document.getElementById('activity-map-cells');
+        const activityMapTooltip = document.getElementById('activity-map-tooltip');
+
+        function clearLinkedNodes() {
+          mapNodes.forEach(n => n.classList.remove('is-linked', 'is-dim'));
+        }
+
+        function positionMapPaths() {
+          if (!mapEl || !mapPaths.length) return;
+          const mapRect = mapEl.getBoundingClientRect();
+
+          mapPaths.forEach(path => {
+            const fromKey = path.dataset.from;
+            const toKey = path.dataset.to;
+            const fromNode = mapNodes.find(node => node.dataset.node === fromKey);
+            const toNode = mapNodes.find(node => node.dataset.node === toKey);
+            if (!fromNode || !toNode) return;
+
+            const fromRect = fromNode.getBoundingClientRect();
+            const toRect = toNode.getBoundingClientRect();
+            const x1 = fromRect.left - mapRect.left + fromRect.width / 2;
+            const y1 = fromRect.top - mapRect.top + fromRect.height / 2;
+            const x2 = toRect.left - mapRect.left + toRect.width / 2;
+            const y2 = toRect.top - mapRect.top + toRect.height / 2;
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.max(Math.hypot(dx, dy), 12);
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            path.style.left = `${x1}px`;
+            path.style.top = `${y1}px`;
+            path.style.width = `${length}px`;
+            path.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+          });
+        }
+
+        function linkNodes(keys) {
+          if (!keys || !keys.length) {
+            clearLinkedNodes();
+            return;
+          }
+          mapNodes.forEach(node => {
+            const match = keys.includes(node.dataset.node);
+            node.classList.toggle('is-linked', match);
+            node.classList.toggle('is-dim', !match);
+          });
+        }
+
+        function toast(message) {
+          toastStack.classList.remove('is-hidden');
+          const el = document.createElement('div');
+          el.className = 'quest-toast';
+          el.textContent = message;
+          toastStack.appendChild(el);
+          setTimeout(() => {
+            el.remove();
+            if (!toastStack.children.length) toastStack.classList.add('is-hidden');
+          }, 2600);
+        }
+
+        function spawnSparkles(count = 10, mega = false) {
+          if (!sparkleLayer) return;
+          const bits = mega
+            ? ['✨', '✦', '🌸', '💫', '❀', '⋆']
+            : ['✨', '🌸', '⋆', '✦', '❀'];
+          for (let i = 0; i < count; i += 1) {
+            const bit = document.createElement('span');
+            bit.className = `quest-sparkle-bit${mega ? ' is-mega' : ''}`;
+            bit.textContent = bits[i % bits.length];
+            bit.style.left = `${mega ? 3 : 6 + Math.random() * (mega ? 94 : 88)}%`;
+            bit.style.top = `${mega ? 6 : 10 + Math.random() * (mega ? 82 : 74)}%`;
+            bit.style.animationDelay = `${i * (mega ? 55 : 85)}ms`;
+            bit.style.fontSize = `${mega ? 0.92 + Math.random() * 0.9 : 0.68 + Math.random() * 0.56}rem`;
+            sparkleLayer.appendChild(bit);
+            setTimeout(() => bit.remove(), mega ? 3600 : 2800);
+          }
+        }
+
+        function openInspector(title, subtitle, copy) {
+          inspectorTitle.textContent = title;
+          inspectorSubtitle.textContent = subtitle;
+          inspectorCopy.textContent = copy;
+          inspectorDrawer.classList.remove('is-hidden');
+        }
+
+        if (inspectorClose) {
+          inspectorClose.addEventListener('click', () => inspectorDrawer.classList.add('is-hidden'));
+        }
+
+        if (notificationsBtn && notificationsPanel) {
+          notificationsBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            notificationsPanel.classList.toggle('is-hidden');
+          });
+        }
+
+        if (sparkleBtn) {
+          let sparkleTapCount = 0;
+          sparkleBtn.addEventListener('click', () => {
+            sparkleTapCount += 1;
+            const mega = sparkleTapCount % 5 === 0;
+
+            if (mega) {
+              spawnSparkles(34, true);
+              setTimeout(() => spawnSparkles(18, true), 240);
+              setTimeout(() => spawnSparkles(12), 520);
+              toast('rare mega sparkle blessing!! ✨🌸💫');
+            } else {
+              spawnSparkles(20);
+              setTimeout(() => spawnSparkles(10), 260);
+              toast('playful sparkle pass ✨');
+            }
+          });
+        }
+
+        function activateTab(target, silent = false) {
+          const activeTab = tabs.find(tab => tab.dataset.tab === target) || tabs[0];
+          const activeTarget = activeTab ? activeTab.dataset.tab : 'code';
+          tabs.forEach(t => t.classList.toggle('is-active', t === activeTab));
+          panels.forEach(panel => panel.classList.toggle('is-hidden', panel.dataset.panel !== activeTarget));
+          if (centerColumn) centerColumn.classList.toggle('is-rpg-mode', activeTarget === 'rpg');
+          if (!silent && activeTab) toast(`Opened ${activeTab.textContent.trim()} ✨`);
+        }
+
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => activateTab(tab.dataset.tab));
+        });
+
+        fileRows.forEach(row => {
+          row.addEventListener('mouseenter', () => {
+            const links = (row.dataset.links || '').split(',').filter(Boolean);
+            linkNodes(links);
+          });
+          row.addEventListener('mouseleave', () => {
+            const selected = fileRows.find(r => r.classList.contains('is-selected'));
+            const links = selected ? (selected.dataset.links || '').split(',').filter(Boolean) : [];
+            linkNodes(links);
+          });
+          row.addEventListener('click', () => {
+            fileRows.forEach(r => r.classList.remove('is-selected'));
+            row.classList.add('is-selected');
+            const links = (row.dataset.links || '').split(',').filter(Boolean);
+            linkNodes(links);
+            openInspector('File Inspector', row.dataset.name, row.dataset.detail);
+            toast(`Opened ${row.dataset.name}`);
+          });
+        });
+
+        mapNodes.forEach(node => {
+          node.addEventListener('click', () => {
+            mapNodes.forEach(n => n.classList.remove('is-selected'));
+            node.classList.add('is-selected');
+            openInspector('Service Inspector', node.dataset.service, node.dataset.detail);
+            toast(`${node.dataset.service} highlighted 🗺️`);
+          });
+        });
+
+        function updateAgentLevel() {
+          if (!agentLevelValue || !agentExpLabel || !agentExpPercent || !agentExpFill) return;
+
+          const startDate = new Date(Date.UTC(2026, 4, 1));
+          const now = new Date();
+          const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+          const startUtc = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+          const msPerDay = 24 * 60 * 60 * 1000;
+          const daysSinceStart = Math.max(0, Math.floor((todayUtc - startUtc) / msPerDay));
+          const level = daysSinceStart + 1;
+
+          const dayProgress = ((now.getUTCHours() * 60) + now.getUTCMinutes()) / (24 * 60);
+          const expPercent = Math.max(8, Math.min(98, Math.round(dayProgress * 100)));
+          const nextLevel = level + 1;
+
+          agentLevelValue.textContent = String(level);
+          agentExpLabel.textContent = `EXP to Lv. ${nextLevel}`;
+          agentExpPercent.textContent = `${expPercent}%`;
+          agentExpFill.style.width = `${expPercent}%`;
+        }
+
+        const ACTIVITY_GRID = { cols: 24, rows: 12 };
+        const activityEntries = [
+          { x: 5, y: 6, level: 4, type: 'skills', region: 'Skill Village', detail: 'skill updated', commits: 4, recent: true },
+          { x: 12, y: 4, level: 4, type: 'status', region: 'Status Tower', detail: 'heartbeat normal', commits: 5, recent: true },
+          { x: 10, y: 5, level: 2, type: 'scripts', region: 'River Bend', detail: 'scripts tuned', commits: 2, recent: false },
+          { x: 6, y: 4, level: 2, type: 'scripts', region: 'Stone Bridge', detail: 'data flow adjusted', commits: 2, recent: false },
+          { x: 4, y: 4, level: 3, type: 'memory', region: 'Hidden Grove', detail: 'memory refined', commits: 3, recent: true },
+          { x: 18, y: 7, level: 3, type: 'skills', region: 'East Hamlet', detail: 'helper skill polished', commits: 3, recent: false },
+          { x: 20, y: 3, level: 2, type: 'guardrails', region: 'Mountain Watch', detail: 'rules kept stable', commits: 2, recent: false },
+          { x: 14, y: 3, level: 1, type: 'status', region: 'Hill Lantern', detail: 'status note updated', commits: 1, recent: false },
+          { x: 8, y: 8, level: 3, type: 'memory', region: 'Forest Edge', detail: 'curated durable truths', commits: 3, recent: false }
+        ];
+
+        function getActivityEntry(x, y) {
+          return activityEntries.find(entry => entry.x === x && entry.y === y);
+        }
+
+        function renderActivityMap() {
+          if (!activityMapCanvas || !activityMapCells) return;
+          activityMapCells.innerHTML = '';
+          activityEntries.forEach(entry => {
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = `quest-activity-cell level-${entry.level}${entry.recent ? ' recent' : ''}`;
+            cell.style.left = `${((entry.x + 0.5) / ACTIVITY_GRID.cols) * 100}%`;
+            cell.style.top = `${((entry.y + 0.5) / ACTIVITY_GRID.rows) * 100}%`;
+            cell.dataset.region = entry.region;
+            cell.dataset.detail = entry.detail;
+            cell.dataset.type = entry.type;
+            cell.dataset.commits = String(entry.commits);
+
+            activityMapCells.appendChild(cell);
+          });
+        }
+
+        function bindActivityMap() {
+          if (!activityMapCanvas || !activityMapTooltip || !activityMapCells) return;
+
+          function hideTooltip() {
+            activityMapTooltip.classList.add('is-hidden');
+          }
+
+          activityMapCells.addEventListener('mouseleave', hideTooltip);
+          activityMapCells.addEventListener('mousemove', (event) => {
+            const cell = event.target.closest('.quest-activity-cell');
+            if (!cell) {
+              hideTooltip();
+              return;
+            }
+            const rect = activityMapCanvas.getBoundingClientRect();
+            const cellRect = cell.getBoundingClientRect();
+            activityMapTooltip.innerHTML = `<strong>${cell.dataset.commits} commits here</strong>${cell.dataset.detail}<br>${cell.dataset.region}`;
+            activityMapTooltip.classList.remove('is-hidden');
+            
+            // Calculate tooltip position with boundary checking
+            const tooltipRect = activityMapTooltip.getBoundingClientRect();
+            let leftPos = cellRect.left - rect.left + cellRect.width / 2;
+            let topPos = cellRect.top - rect.top;
+            
+            // Check if tooltip would go outside left boundary
+            if (leftPos - tooltipRect.width / 2 < 0) {
+              leftPos = tooltipRect.width / 2;
+            }
+            // Check if tooltip would go outside right boundary
+            else if (leftPos + tooltipRect.width / 2 > rect.width) {
+              leftPos = rect.width - tooltipRect.width / 2;
+            }
+            
+            // Check if tooltip would go outside top boundary
+            if (topPos - tooltipRect.height - 8 < 0) {
+              // If not enough space above, show below the cell
+              topPos = cellRect.top - rect.top + cellRect.height + 8;
+              // Reset transform for downward positioning
+              activityMapTooltip.style.transform = 'translate(-50%, 0)';
+            } else {
+              // Show above the cell (default)
+              activityMapTooltip.style.transform = 'translate(-50%, calc(-100% - 8px))';
+            }
+            
+            activityMapTooltip.style.left = `${leftPos}px`;
+            activityMapTooltip.style.top = `${topPos}px`;
+          });
+
+          activityMapCells.addEventListener('click', (event) => {
+            const cell = event.target.closest('.quest-activity-cell');
+            if (!cell) return;
+            openInspector('World Activity', cell.dataset.region, `${cell.dataset.commits} commits here · ${cell.dataset.detail} · related system: ${cell.dataset.type}.`);
+            toast(`${cell.dataset.region} lights up ✨`);
+          });
+        }
+
+        async function loadStatusPulse() {
+          try {
+            const [statusRes, signalsRes] = await Promise.all([
+              fetch('/status.json', { cache: 'no-store' }),
+              fetch('/data/signals.json', { cache: 'no-store' })
+            ]);
+            const status = statusRes.ok ? await statusRes.json() : null;
+            const signals = signalsRes.ok ? await signalsRes.json() : null;
+            const mode = (status && status.mode) || 'smart';
+            const fresh = (signals && signals.freshest) || '';
+
+            const liveKeys = mode === 'smart'
+              ? ['gateway', 'memory', 'status', 'telegram', 'tailscale']
+              : ['gateway', 'status'];
+
+            mapNodes.forEach(node => {
+              node.classList.toggle('is-live', liveKeys.includes(node.dataset.node));
+            });
+
+            if (fresh.toLowerCase().includes('signal')) {
+              const signalNode = mapNodes.find(node => node.dataset.node === 'status');
+              if (signalNode) signalNode.classList.add('is-live');
+            }
+          } catch (error) {
+            mapNodes.forEach(node => {
+              if (['gateway', 'status'].includes(node.dataset.node)) node.classList.add('is-live');
+            });
+          }
+        }
+
+        if (commitRow) {
+          commitRow.addEventListener('click', () => {
+            toast('Latest commit pulse checked 🌟');
+          });
+        }
+
+        if (questCrabTrigger) {
+          const crabSecrets = [
+            'tiny crab blessing granted 🦀✨',
+            'soft room energy increased 🌸',
+            'nest morale +1',
+            'crab patrol says all systems cute',
+            'little smug mode activated ✨'
+          ];
+          let crabTapCount = 0;
+
+          questCrabTrigger.addEventListener('click', () => {
+            crabTapCount += 1;
+            questCrabTrigger.classList.remove('is-easter-bloom');
+            void questCrabTrigger.offsetWidth;
+            questCrabTrigger.classList.add('is-easter-bloom');
+
+            if (crabTapCount % 5 === 0) {
+              toast('secret crab combo!! the nest sparkles back 🦀🌸✨');
+            } else {
+              toast(crabSecrets[(crabTapCount - 1) % crabSecrets.length]);
+            }
+          });
+        }
+
+        if (starBtn) {
+          let starred = false;
+          starBtn.addEventListener('click', () => {
+            starred = !starred;
+            starBtn.textContent = starred ? '⭐ Blessed' : '⭐ Star';
+            starBtn.style.borderColor = starred ? 'rgba(212, 168, 79, 0.55)' : '';
+            toast(starred ? 'Repo blessed ✨' : 'Blessing removed');
+          });
+        }
+
+        if (watchBtn) {
+          let watching = false;
+          watchBtn.addEventListener('click', () => {
+            watching = !watching;
+            watchBtn.textContent = watching ? '👁 Watching Nest' : '👁 Watch';
+            watchBtn.style.borderColor = watching ? 'rgba(124, 255, 122, 0.45)' : '';
+            toast(watching ? 'Watching Nest enabled 👁️' : 'Stopped watching nest');
+          });
+        }
+
+        if (forkBtn) {
+          forkBtn.addEventListener('click', () => toast('Skill fork prepared 🍴'));
+        }
+
+        if (codeBtn && codeMenu) {
+          codeBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            codeMenu.classList.toggle('is-hidden');
+          });
+
+          codeMenu.querySelectorAll('.quest-code-option').forEach(option => {
+            option.addEventListener('click', async () => {
+              const value = option.dataset.copy || '';
+              try {
+                if (navigator.clipboard && value) await navigator.clipboard.writeText(value);
+              } catch (error) {}
+              toast('Copied local code path ✨');
+              codeMenu.classList.add('is-hidden');
+            });
+          });
+
+          document.addEventListener('click', () => codeMenu.classList.add('is-hidden'));
+        }
+
+        document.addEventListener('click', () => {
+          if (notificationsPanel) notificationsPanel.classList.add('is-hidden');
+        });
+
+        if (searchInput) {
+          searchInput.addEventListener('input', () => {
+            const q = searchInput.value.trim().toLowerCase();
+            fileRows.forEach(row => {
+              const hay = `${row.dataset.name} ${row.dataset.detail} ${row.textContent}`.toLowerCase();
+              row.style.display = hay.includes(q) ? '' : 'none';
+            });
+            mapNodes.forEach(node => {
+              const hay = `${node.dataset.service} ${node.dataset.detail} ${node.textContent}`.toLowerCase();
+              const match = hay.includes(q);
+              node.classList.toggle('is-dim', !!q && !match);
+            });
+          });
+        }
+
+        updateAgentLevel();
+        bindActivityMap();
+        renderActivityMap();
+        loadStatusPulse();
+        activateTab('code', true);
+        positionMapPaths();
+
+        window.addEventListener('resize', positionMapPaths);
+        window.addEventListener('load', positionMapPaths);
+
+        if (window.ResizeObserver && mapEl) {
+          const mapResizeObserver = new ResizeObserver(() => positionMapPaths());
+          mapResizeObserver.observe(mapEl);
+          mapNodes.forEach(node => mapResizeObserver.observe(node));
+        }
+      })();
+    </script>
+  </body>
+</html>
